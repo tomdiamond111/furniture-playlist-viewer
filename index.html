@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Furniture Playlist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 350px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #info-panel h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        #info-panel .subtitle {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 16px;
+        }
+
+        #info-panel .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        #info-panel .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        #info-panel .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        #info-panel .stat-label {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 4px;
+        }
+
+        #playlist {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            bottom: 20px;
+            width: 320px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #playlist h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #direction-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 5px;
+        }
+
+        #direction-pad button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #direction-pad button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        #direction-pad button:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+
+        #direction-pad button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .zoom-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .zoom-control label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        #zoom-slider {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            width: 30px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            border-radius: 10px;
+        }
+
+        #zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        #zoom-slider::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .playlist-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-4px);
+        }
+
+        .playlist-item.active {
+            background: rgba(102, 126, 234, 0.3);
+            border: 2px solid #667eea;
+        }
+
+        .playlist-item.local-media {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .playlist-item-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .playlist-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .playlist-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .playlist-item-subtitle {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .playlist-item-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .badge-youtube {
+            background: #ff0000;
+            color: #fff;
+        }
+
+        .badge-vimeo {
+            background: #1ab7ea;
+            color: #fff;
+        }
+
+        .badge-local {
+            background: #888;
+            color: #fff;
+        }
+
+        #error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        #error-message h2 {
+            color: #ff6b6b;
+            margin-bottom: 16px;
+        }
+
+        #error-message p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Loading shared furniture...</p>
+        </div>
+
+        <div id="error-message" style="display: none;">
+            <h2>⚠️ Unable to Load Furniture</h2>
+            <p id="error-text"></p>
+        </div>
+
+        <div id="info-panel" style="display: none;">
+            <h1 id="furniture-name">Loading...</h1>
+            <div class="subtitle" id="furniture-type"></div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="total-objects">0</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="youtube-count">0</div>
+                    <div class="stat-label">YouTube Videos</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="playlist" style="display: none;">
+            <h2>Playlist</h2>
+            <div id="playlist-items"></div>
+        </div>
+
+        <div id="controls" style="display: none;">
+            <div id="direction-pad">
+                <button disabled></button>
+                <button id="btn-up" title="Move Up">▲</button>
+                <button disabled></button>
+                <button id="btn-left" title="Move Left">◄</button>
+                <button disabled></button>
+                <button id="btn-right" title="Move Right">►</button>
+                <button disabled></button>
+                <button id="btn-down" title="Move Down">▼</button>
+                <button disabled></button>
+            </div>
+            
+            <div class="zoom-control">
+                <label>Zoom</label>
+                <input type="range" id="zoom-slider" min="5" max="50" value="20" orient="vertical">
+            </div>
+        </div>this.cameraTarget = new THREE.Vector3(0, 0, 0);
+                this.cameraDistance = 20;
+                
+    </div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- LZ-String for decompression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+
+    <script>
+        // Viewer Application
+        class FurnitureViewer {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.furniture = null;
+                this.objects = [];
+                this.currentPlayingIndex = -1;
+                
+                this.init();
+            }
+
+            async init() {
+                try {
+                    // Extract data from URL
+                    const shareData = this.extractShareData();
+                    
+                    // Initialize Three.js scene
+                    this.initThreeJS();
+                    
+                    // Load furniture and objects
+                    await this.loadFurniture(shareData);
+                    
+                    // Setup UI
+                    thisetup camera controls
+                    this.setupCameraControls();
+                    
+                    // Start render loop
+                    this.animate();
+                    
+                    // Hide loading
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('controls').style.display = 'flex
+                    // Hide loading
+                    document.getElementById('loading').style.display = 'none';
+                    
+                } catch (error) {
+                    this.showError(error.message);
+                }
+            }
+
+            extractShareData() {
+                console.log('🔍 [SHARE DEBUG] Starting extractShareData...');
+                console.log('🔍 [SHARE DEBUG] window.location.hash:', window.location.hash);
+                
+                const hash = window.location.hash.substring(1);
+                console.log('🔍 [SHARE DEBUG] hash (after substring):', hash.substring(0, 100) + '...');
+                
+                const params = new URLSearchParams(hash);
+                console.log('🔍 [SHARE DEBUG] URLSearchParams created');
+                
+                const compressed = params.get('data');
+                console.log('🔍 [SHARE DEBUG] compressed data exists:', !!compressed);
+                console.log('🔍 [SHARE DEBUG] compressed length:', compressed?.length);
+                console.log('🔍 [SHARE DEBUG] compressed preview:', compressed?.substring(0, 50));
+                
+                if (!compressed) {
+                    console.error('❌ [SHARE DEBUG] No compressed data found!');
+                    throw new Error('No share data found in URL. This link may be invalid or incomplete.');
+                }
+
+                // Decompress data
+                console.log('🔍 [SHARE DEBUG] Attempting decompression with LZString...');
+                try {
+                    const jsonString = LZString.decompressFromEncodedURIComponent(compressed);
+                    console.log('🔍 [SHARE DEBUG] Decompression complete');
+                    console.log('🔍 [SHARE DEBUG] jsonString exists:', !!jsonString);
+                    console.log('🔍 [SHARE DEBUG] jsonString length:', jsonString?.length);
+                    console.log('🔍 [SHARE DEBUG] jsonString preview:', jsonString?.substring(0, 100));
+                    
+                    if (!jsonString) {
+                        console.error('❌ [SHARE DEBUG] Decompression returned null/undefined');
+                        throw new Error('Failed to decompress share data. The link may be corrupted.');
+                    }
+
+                    console.log('🔍 [SHARE DEBUG] Attempting JSON.parse...');
+                    const data = JSON.parse(jsonString);
+                    console.log('✅ [SHARE DEBUG] JSON.parse successful');
+                    console.log('📦 Loaded share data:', data);
+                    
+                    return data;
+                } catch (error) {
+                    console.error('❌ [SHARE DEBUG] Error during decompression/parsing:', error);
+                    console.error('❌ [SHARE DEBUG] Error stack:', error.stack);
+                    throw error;
+                }
+            }
+
+            initThreeJS() {
+                const container = document.getElementById('canvas-container');
+                
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a1a2e);
+                
+                // Camera
+                this.updateCameraPosition(
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 8, 20);
+                this.camera.lookAt(0, 0, 0);
+                
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(this.renderer.domElement);
+                
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7.5);
+                this.scene.add(directionalLight);
+                
+                // Window resize
+                window.addEventListener('resize', () => this.onWindowResize());
+                
+                console.log('✅ Three.js initialized');
+            }
+
+            async loadFurniture(shareData) {
+                const furnitureData = shareData.furniture;
+                const objectsData = shareData.objects;
+                
+                console.log(`🪑 Loading furniture: ${furnitureData.name} (${furnitureData.type})`);
+                
+                // Create furniture visual
+                this.createFurnitureVisual(furnitureData);
+                
+                // Create objects
+                for (const objData of objectsData) {
+                    if (objData.isLocalMedia) {
+                        // Create placeholder for local media
+                        this.createLocalMediaPlaceholder(objData, furnitureData);
+                    } else {
+                        // Create shareable web link object
+                        await this.createLinkObject(objData, furnitureData);
+                    }
+                }
+                
+                console.log(`✅ Loaded ${this.objects.length} objects`);
+            }
+
+            createFurnitureVisual(furnitureData) {
+                // Create simple furniture structure based on type
+                const group = new THREE.Group();
+                
+                // Create base platform
+                const geometry = new THREE.BoxGeometry(12, 0.5, 4);
+                const material = new THREE.MeshStandardMaterial({
+                    color: this.getStyleColor(furnitureData.style),
+                    metalness: 0.3,
+                    roughness: 0.7
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                group.add(mesh);
+                
+                // Position and rotate
+                group.position.set(
+                    furnitureData.position.x,
+                    furnitureData.position.y,
+                    furnitureData.position.z
+                );
+                group.rotation.y = furnitureData.rotation;
+                
+                this.scene.add(group);
+                this.furniture = group;
+            }
+
+            getStyleColor(style) {
+                const colors = {
+                    woodgrain: 0x8B4513,
+                    marble: 0xE8E8E8,
+                    metal: 0x708090,
+                    glass: 0xB0C4DE,
+                    neon: 0xFF1493
+                };
+                return colors[style] || 0x8B4513;
+            }
+
+            async createLinkObject(objData, furnitureData) {
+                // Create cube for link
+                const geometry = new THREE.BoxGeometry(2, 2.5, 2);
+                
+                // Create materials for each face
+                const materials = [];
+                
+                // Load thumbnail texture if available
+                let thumbnailTexture = null;
+                if (objData.thumbnailDataUrl) {
+                    try {
+                        thumbnailTexture = await this.loadTexture(objData.thumbnailDataUrl);
+                    } catch (error) {
+                        console.warn('Failed to load thumbnail:', error);
+                    }
+                }
+                
+                // Create materials (6 faces)
+                for (let i = 0; i < 6; i++) {
+                    if (i === 4 && thumbnailTexture) {
+                        // Front face with thumbnail
+                        materials.push(new THREE.MeshStandardMaterial({
+                            map: thumbnailTexture,
+                            metalness: 0.1,
+                            roughness: 0.8
+                        }));
+                    } else {
+                        // Other faces with solid color
+                        materials.push(new THREE.MeshStandardMaterial({
+                            color: this.getDomainColor(objData.domain),
+                            metalness: 0.3,
+                            roughness: 0.7
+                        }));
+                    }
+                }
+                
+                const mesh = new THREE.Mesh(geometry, materials);
+                
+                // Calculate position based on slot
+                const slotPos = this.calculateSlotPosition(objData.slotIndex, furnitureData);
+                mesh.position.copy(slotPos);
+                
+                // Store metadata
+                mesh.userData = {
+                    ...objData,
+                    objectIndex: this.objects.length
+                };
+                
+                this.scene.add(mesh);
+                this.objects.push(mesh);
+            }
+
+            createLocalMediaPlaceholder(objData, furnitureData) {
+                // Create placeholder cube for local media
+                const geometry = new THREE.BoxGeometry(2, 2.5, 2);
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x555555,
+                    metalness: 0.2,
+                    roughness: 0.9,
+                    opacity: 0.5,
+                    transparent: true
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // Calculate position
+                const slotPos = this.calculateSlotPosition(objData.slotIndex, furnitureData);
+                mesh.position.copy(slotPos);
+                
+                // Store metadata
+                mesh.userData = {
+                    ...objData,
+                    objectIndex: this.objects.length
+                };
+                
+                this.scene.add(mesh);
+                this.objects.push(mesh);
+            }
+
+            calculateSlotPosition(slotIndex, furnitureData) {
+                // Simple linear arrangement for demo
+                const spacing = 2.5;
+                const capacity = furnitureData.capacity;
+                const startX = -(capacity * spacing) / 2 + spacing / 2;
+                
+                return new THREE.Vector3(
+                    startX + (slotIndex * spacing),
+                    furnitureData.position.y + 1.5,
+                    furnitureData.position.z
+                );
+            }
+
+            getDomainColor(domain) {
+                const colors = {
+                    'youtube.com': 0xff0000,
+                    'vimeo.com': 0x1ab7ea,
+                    'soundcloud.com': 0xff8800,
+                    default: 0x667eea
+                };
+                return colors[domain] || colors.default;
+            }
+
+            loadTexture(dataUrl) {
+                return new Promise((resolve, reject) => {
+                    const loader = new THREE.TextureLoader();
+                    loader.load(
+                        dataUrl,
+                        (texture) => {
+                            texture.wrapS = THREE.ClampToEdgeWrapping;
+                            texture.wrapT = THREE.ClampToEdgeWrapping;
+                            texture.minFilter = THREE.LinearFilter;
+                            texture.magFilter = THREE.LinearFilter;
+                            resolve(texture);
+                        },
+                        undefined,
+                        (error) => reject(error)
+                    );
+                });
+            }
+
+            setupUI(shareData) {
+                // Info panel
+                document.getElementById('furniture-name').textContent = shareData.furniture.name;
+                document.getElementById('furniture-type').textContent = `${shareData.furniture.type} • ${shareData.objects.length} items`;
+                document.getElementById('total-objects').textContent = shareData.objects.length;
+                
+                const youtubeCount = shareData.objects.filter(o => o.domain === 'youtube.com').length;
+                document.getElementById('youtube-count').textContent = youtubeCount;
+                
+                document.getElementById('info-panel').style.display = 'block';
+                
+                // Playlist
+                const playlistContainer = document.getElementById('playlist-items');
+                this.objects.forEach((obj, index) => {
+                    const objData = obj.userData;
+                    const item = document.createElement('div');
+                    item.className = 'playlist-item';
+                    if (objData.isLocalMedia) {
+                        item.classList.add('local-media');
+                    }
+                    
+                    // Thumbnail
+                    if (objData.thumbnailDataUrl && !objData.isLocalMedia) {
+                        const thumb = document.createElement('img');
+                        thumb.className = 'playlist-item-thumbnail';
+                        thumb.src = objData.thumbnailDataUrl;
+                        item.appendChild(thumb);
+                    } else {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'playlist-item-thumbnail';
+                        item.appendChild(placeholder);
+                    }
+                    
+                    // Info
+                    const info = document.createElement('div');
+                    info.className = 'playlist-item-info';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'playlist-item-title';
+                    title.textContent = objData.name || objData.title || 'Untitled';
+                    info.appendChild(title);
+                    
+                    const subtitle = document.createElement('div');
+                    subtitle.className = 'playlist-item-subtitle';
+                    subtitle.textContent = objData.domain || 'Local Media';
+                    info.appendChild(subtitle);
+                    
+                    // Badge
+                    if (objData.isLocalMedia) {
+                        const badge = document.createElement('span');
+                        badge.className = 'playlist-item-badge badge-local';
+                        badge.textContent = 'Local Media';
+                        info.appendChild(badge);
+                    } else if (objData.domain === 'youtube.com') {
+                        const badge = document.createElement('span');
+                        badge.className = 'playlist-item-badge badge-youtube';
+                        badge.textContent = 'YouTube';
+                        info.appendChild(badge);
+                    } else if (objData.domain === 'vimeo.com') {
+                        const badge = document.createElement('span');
+                        badge.className = 'playlist-item-badge badge-vimeo';
+                        badge.textContent = 'Vimeo';
+                        info.appendChild(badge);
+                    }
+                    
+                    item.appendChild(info);
+                    
+                    // Click handler
+                    if (!objData.isLocalMedia) {
+                        item.addEventListener('click', () => {
+                            window.open(objData.url, '_blank');
+                            this.highlightObject(index);
+                        });
+                    }
+                    
+                    playlistContainer.appendChild(item);
+                });
+                
+                document.getElementById('playlist').style.display = 'block';
+            }
+
+            highlightObject(index) {
+                // Update playlist items
+                document.querySelectorAll('.playlist-item').forEach((item, i) => {
+                    if (i === index) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+                
+                // Animate object in 3D scene
+                const object = this.objects[index];
+                if (object) {
+                    // Simple scale animation
+                    const originalScale = object.scale.clone();
+                    object.scale.set(1.2, 1.2, 1.2);
+                    setTimeout(() => {
+                        object.scale.copy(originalScale);
+                    }, 300);
+                }
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Update camera position
+                this.updateCameraPosition();
+                
+                // Rotate furniture slowly
+                if (this.furniture) {
+                    this.furniture.rotation.y += 0.002;
+                }
+                
+                // Gentle bob animation for objects
+                this.objects.forEach((obj, index) => {
+                    const time = Date.now() * 0.001;
+                    obj.position.y += Math.sin(time + index) * 0.001;
+                });
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            updateCameraPosition() {
+                // Position camera at distance from target
+                this.camera.position.set(
+                    this.cameraTarget.x,
+                    this.cameraTarget.y + 8,
+                    this.cameraTarget.z + this.cameraDistance
+                );
+                this.camera.lookAt(this.cameraTarget);
+            }
+
+            setupCameraControls() {
+                const moveSpeed = 2;
+                
+                // Direction buttons
+                document.getElementById('btn-up').addEventListener('click', () => {
+                    this.cameraTarget.y += moveSpeed;
+                });
+                
+                document.getElementById('btn-down').addEventListener('click', () => {
+                    this.cameraTarget.y -= moveSpeed;
+                });
+                
+                document.getElementById('btn-left').addEventListener('click', () => {
+                    this.cameraTarget.x -= moveSpeed;
+                });
+                
+                document.getElementById('btn-right').addEventListener('click', () => {
+                    this.cameraTarget.x += moveSpeed;
+                });
+                
+                // Zoom slider
+                const zoomSlider = document.getElementById('zoom-slider');
+                zoomSlider.addEventListener('input', (e) => {
+                    this.cameraDistance = parseFloat(e.target.value);
+                });
+                
+                console.log('✅ Camera controls initialized');
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            showError(message) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-text').textContent = message;
+            }
+        }
+
+        // Initialize viewer
+        window.addEventListener('DOMContentLoaded', () => {
+            new FurnitureViewer();
+        });
+    </script>
+</body>
+</html>
