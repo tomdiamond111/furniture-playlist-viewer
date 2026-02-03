@@ -941,7 +941,7 @@
                 
                 for (let i = 0; i < tiers; i++) {
                     const currentHeight = (tiers - i - 1) * tierHeight;
-                    const zOffset = -tierDepth * i;
+                    const zOffset = tierDepth * (tiers - 1 - i); // Reverse: front (lowest) at positive Z
                     
                     // Platform
                     const platformGeom = new THREE.BoxGeometry(width, 0.3, tierDepth);
@@ -1158,7 +1158,7 @@
                 
                 const x = -usableWidth / 2 + (posInTier * spacingX);
                 const y = (2 - tier) * tierHeight + 0.5; // Back row highest
-                const z = -tierDepth * tier;
+                const z = tierDepth * (2 - tier); // Reverse: front (tier 2) at z=0, back (tier 0) at z=8
                 
                 return new THREE.Vector3(x, y, z);
             }
