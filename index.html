@@ -212,8 +212,8 @@
         </div>
     </div>
     
-    <!-- Pako compression library for decompression -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <!-- LZ-String compression library for decompression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     
     <script>
         // Get URL parameters
@@ -303,20 +303,25 @@
                     throw new Error(`Base64 decode failed: ${atobError.message}. Data might be corrupted or in wrong format.`);
                 }
                 
-                // Decompress the data (it's compressed with pako)
+                // Decompress the data (it's compressed with LZ-String)
                 let jsonString;
                 try {
-                    // Convert base64-decoded string to Uint8Array
-                    const compressedData = Uint8Array.from(decodedData, c => c.charCodeAt(0));
-                    console.log('🗜️ Decompressing data...');
+                    console.log('🗜️ Decompressing with LZ-String...');
                     
-                    // Decompress using pako
-                    const decompressed = pako.inflate(compressedData, { to: 'string' });
-                    console.log('✅ Data decompressed successfully');
-                    jsonString = decompressed;
+                    // The data is compressed with compressToEncodedURIComponent
+                    // So we should already have the compressed string (not base64)
+                    // Actually, let's try decompressing the original furnitureData
+                    const decompressed = LZString.decompressFromEncodedURIComponent(furnitureData);
+                    
+                    if (decompressed) {
+                        console.log('✅ Data decompressed successfully with LZ-String');
+                        jsonString = decompressed;
+                    } else {
+                        throw new Error('LZ-String decompression returned null');
+                    }
                 } catch (decompressError) {
-                    console.error('❌ Decompression failed:', decompressError);
-                    console.log('ℹ️ Trying to parse as uncompressed JSON...');
+                    console.error('❌ LZ-String decompression failed:', decompressError);
+                    console.log('ℹ️ Trying to parse base64-decoded data as JSON...');
                     jsonString = decodedData;
                 }
                 
