@@ -444,6 +444,136 @@
             background: rgba(102, 126, 234, 0.2);
             transform: translateX(-5px);
         }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            /* Hide info panel on mobile to save space */
+            #info-panel {
+                display: none !important;
+            }
+            
+            /* Make playlist narrower and shorter on mobile */
+            #playlist {
+                width: 200px;
+                top: 10px;
+                bottom: 10px;
+                right: 10px;
+                padding: 12px;
+                font-size: 12px;
+            }
+            
+            #playlist h2 {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+            
+            .playlist-item {
+                padding: 8px;
+                margin-bottom: 8px;
+                gap: 8px;
+            }
+            
+            .playlist-item-thumbnail {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .playlist-item-title {
+                font-size: 11px;
+            }
+            
+            .playlist-item-subtitle {
+                font-size: 9px;
+            }
+            
+            /* Make controls more compact */
+            #controls {
+                bottom: 10px;
+                left: 10px;
+                padding: 12px;
+                gap: 8px;
+            }
+            
+            #controls button {
+                width: 45px;
+                height: 45px;
+                font-size: 16px;
+            }
+            
+            .zoom-control {
+                gap: 5px;
+            }
+            
+            #zoom-slider {
+                height: 80px;
+                width: 25px;
+            }
+        }
+        
+        /* Portrait mode - stack playlist at bottom */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #playlist {
+                position: absolute;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                top: auto;
+                width: auto;
+                height: 150px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap;
+            }
+            
+            #playlist h2 {
+                margin-bottom: 8px;
+            }
+            
+            .playlist-item {
+                display: inline-flex;
+                width: 180px;
+                vertical-align: top;
+                margin-right: 8px;
+                margin-bottom: 0;
+            }
+            
+            #controls {
+                bottom: 170px;
+            }
+        }
+        
+        /* Landscape mode optimizations */
+        @media (max-width: 768px) and (orientation: landscape) {
+            #playlist {
+                width: 160px;
+            }
+            
+            .playlist-item-thumbnail {
+                width: 35px;
+                height: 35px;
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            #info-panel {
+                max-width: 280px;
+                padding: 16px;
+                top: 15px;
+                left: 15px;
+            }
+            
+            #info-panel h1 {
+                font-size: 20px;
+            }
+            
+            #playlist {
+                width: 280px;
+                top: 15px;
+                right: 15px;
+                bottom: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -738,23 +868,45 @@
             }
 
             createFurnitureVisual(furnitureData) {
-                // Create simple furniture structure based on type
+                // Create furniture structure based on type
                 const group = new THREE.Group();
-                
-                // Create wall (standing upright on Y axis)
-                const geometry = new THREE.BoxGeometry(12, 6, 0.5); // Width, Height, Depth
                 const material = new THREE.MeshStandardMaterial({
                     color: this.getStyleColor(furnitureData.style),
                     metalness: 0.3,
                     roughness: 0.7
                 });
-                const mesh = new THREE.Mesh(geometry, material);
-                group.add(mesh);
                 
-                // Position at origin, wall stands vertically
-                group.position.set(0, 3, 0); // Center at height 3
+                const type = furnitureData.type;
+                console.log('🪑 Creating furniture type:', type);
                 
-                // Store metadata
+                switch(type) {
+                    case 'bookshelf':
+                        this.createBookshelf(group, material);
+                        group.position.set(0, 3.5, 0);
+                        break;
+                    case 'riser':
+                        this.createRiser(group, material);
+                        group.position.set(0, 0, 0);
+                        break;
+                    case 'gallery_wall':
+                        this.createGalleryWall(group, material);
+                        group.position.set(0, 3, 0);
+                        break;
+                    case 'stage_small':
+                    case 'stage_large':
+                        this.createStage(group, material, type === 'stage_large');
+                        group.position.set(0, 1, 0);
+                        break;
+                    case 'amphitheatre':
+                        this.createAmphitheatre(group, material);
+                        group.position.set(0, 0, 0);
+                        break;
+                    default:
+                        // Fallback to gallery wall
+                        this.createGalleryWall(group, material);
+                        group.position.set(0, 3, 0);
+                }
+                
                 group.userData = {
                     name: furnitureData.name,
                     type: furnitureData.type
@@ -762,6 +914,107 @@
                 
                 this.scene.add(group);
                 this.furniture = group;
+            }
+            
+            createBookshelf(group, material) {
+                // Back panel
+                const backGeom = new THREE.BoxGeometry(18, 7, 0.2);
+                const back = new THREE.Mesh(backGeom, material);
+                back.position.set(0, 3.5, -1);
+                group.add(back);
+                
+                // Shelves
+                const shelfGeom = new THREE.BoxGeometry(18, 0.3, 2);
+                for (let i = 0; i <= 2; i++) {
+                    const shelf = new THREE.Mesh(shelfGeom, material);
+                    shelf.position.set(0, i * 3.5, 0);
+                    group.add(shelf);
+                }
+            }
+            
+            createRiser(group, material) {
+                // 3 tiered steps
+                const tiers = 3;
+                const tierHeight = 1.0;
+                const tierDepth = 4;
+                const width = 24;
+                
+                for (let i = 0; i < tiers; i++) {
+                    const currentHeight = (tiers - i - 1) * tierHeight;
+                    const zOffset = -tierDepth * i;
+                    
+                    // Platform
+                    const platformGeom = new THREE.BoxGeometry(width, 0.3, tierDepth);
+                    const platform = new THREE.Mesh(platformGeom, material);
+                    platform.position.set(0, currentHeight, zOffset);
+                    group.add(platform);
+                    
+                    // Front edge
+                    const edgeGeom = new THREE.BoxGeometry(width, tierHeight, 0.1);
+                    const edge = new THREE.Mesh(edgeGeom, material);
+                    edge.position.set(0, currentHeight / 2, zOffset + tierDepth / 2);
+                    group.add(edge);
+                }
+            }
+            
+            createGalleryWall(group, material) {
+                // Vertical wall
+                const geometry = new THREE.BoxGeometry(12, 6, 0.5);
+                const mesh = new THREE.Mesh(geometry, material);
+                group.add(mesh);
+            }
+            
+            createStage(group, material, isLarge) {
+                const width = isLarge ? 40 : 25;
+                const depth = isLarge ? 25 : 15;
+                const height = 2;
+                
+                // Stage platform
+                const platformGeom = new THREE.BoxGeometry(width, height, depth);
+                const platform = new THREE.Mesh(platformGeom, material);
+                platform.position.set(0, height / 2, 0);
+                group.add(platform);
+                
+                // Back wall
+                const wallGeom = new THREE.BoxGeometry(width, 8, 0.5);
+                const wall = new THREE.Mesh(wallGeom, material);
+                wall.position.set(0, height + 4, -depth / 2);
+                group.add(wall);
+                
+                // Side pillars
+                const pillarGeom = new THREE.BoxGeometry(0.8, 10, 0.8);
+                const leftPillar = new THREE.Mesh(pillarGeom, material);
+                leftPillar.position.set(-width / 2 + 0.3, height + 5, -depth / 2 + 0.3);
+                group.add(leftPillar);
+                
+                const rightPillar = new THREE.Mesh(pillarGeom, material);
+                rightPillar.position.set(width / 2 - 0.3, height + 5, -depth / 2 + 0.3);
+                group.add(rightPillar);
+                
+                // Roof
+                const roofGeom = new THREE.BoxGeometry(width + 2, 0.5, depth / 2);
+                const roof = new THREE.Mesh(roofGeom, material);
+                roof.position.set(0, height + 10, -depth / 4);
+                group.add(roof);
+            }
+            
+            createAmphitheatre(group, material) {
+                // Tiered semicircular seating
+                const radius = 30;
+                const tiers = 5;
+                const tierHeight = 2;
+                const tierDepth = 4;
+                
+                for (let tier = 0; tier < tiers; tier++) {
+                    const tierRadius = radius - (tier * tierDepth);
+                    const tierGeom = new THREE.CylinderGeometry(
+                        tierRadius, tierRadius, tierHeight,
+                        32, 1, false, 0, Math.PI
+                    );
+                    const tierMesh = new THREE.Mesh(tierGeom, material);
+                    tierMesh.position.set(0, tier * tierHeight + tierHeight / 2, 0);
+                    group.add(tierMesh);
+                }
             }
 
             getStyleColor(style) {
@@ -855,23 +1108,113 @@
             }
 
             calculateSlotPosition(slotIndex, furnitureData) {
-                // Arrange objects on vertical wall in grid pattern
-                // Position relative to furniture origin (furniture is at 0,3,0 in world, so objects are relative to 0,0,0)
-                const spacing = 2.5;
-                const capacity = furnitureData.capacity || 10;
-                const cols = Math.ceil(Math.sqrt(capacity));
+                const type = furnitureData.type;
+                
+                switch(type) {
+                    case 'bookshelf':
+                        return this.calculateBookshelfSlot(slotIndex);
+                    case 'riser':
+                        return this.calculateRiserSlot(slotIndex);
+                    case 'gallery_wall':
+                        return this.calculateGalleryWallSlot(slotIndex);
+                    case 'stage_small':
+                    case 'stage_large':
+                        return this.calculateStageSlot(slotIndex, type === 'stage_large');
+                    case 'amphitheatre':
+                        return this.calculateAmphitheatreSlot(slotIndex);
+                    default:
+                        return this.calculateGalleryWallSlot(slotIndex);
+                }
+            }
+            
+            calculateBookshelfSlot(slotIndex) {
+                // 2 rows x 3 columns (6 objects total)
+                const cols = 3;
+                const spacingX = 6;
+                const spacingY = 3.5;
                 
                 const col = slotIndex % cols;
                 const row = Math.floor(slotIndex / cols);
                 
-                const startX = -(cols * spacing) / 2 + spacing / 2;
-                const startY = -(Math.ceil(capacity / cols) * spacing) / 2 + spacing / 2; // Relative to furniture center
+                const x = (col - 1) * spacingX; // Center: -6, 0, 6
+                const y = row * spacingY + 1.75; // 1.75, 5.25
+                const z = 0.5; // In front of back panel
                 
-                return new THREE.Vector3(
-                    startX + (col * spacing),
-                    startY + (row * spacing),
-                    0.3 // Slightly in front of wall
-                );
+                return new THREE.Vector3(x, y, z);
+            }
+            
+            calculateRiserSlot(slotIndex) {
+                // 3 tiers, 5 objects per tier (15 total)
+                const objectsPerTier = 5;
+                const tier = Math.floor(slotIndex / objectsPerTier);
+                const posInTier = slotIndex % objectsPerTier;
+                
+                const width = 24;
+                const tierHeight = 1.0;
+                const tierDepth = 4;
+                
+                const usableWidth = width * 0.85;
+                const spacingX = usableWidth / (objectsPerTier - 1);
+                
+                const x = -usableWidth / 2 + (posInTier * spacingX);
+                const y = (2 - tier) * tierHeight + 0.5; // Back row highest
+                const z = -tierDepth * tier;
+                
+                return new THREE.Vector3(x, y, z);
+            }
+            
+            calculateGalleryWallSlot(slotIndex) {
+                // 2 rows x 5 columns (10 objects)
+                const cols = 5;
+                const spacing = 2.5;
+                
+                const col = slotIndex % cols;
+                const row = Math.floor(slotIndex / cols);
+                
+                const x = (col - 2) * spacing; // Center: -5, -2.5, 0, 2.5, 5
+                const y = (row - 0.5) * spacing; // -1.25, 1.25
+                const z = 0.3;
+                
+                return new THREE.Vector3(x, y, z);
+            }
+            
+            calculateStageSlot(slotIndex, isLarge) {
+                const width = isLarge ? 40 : 25;
+                const depth = isLarge ? 25 : 15;
+                const rows = isLarge ? 7 : 4;
+                const cols = isLarge ? 7 : 4;
+                const spacingX = width / (cols + 1);
+                const spacingZ = depth / (rows + 1);
+                
+                const col = slotIndex % cols;
+                const row = Math.floor(slotIndex / cols);
+                
+                const x = -width / 2 + spacingX * (col + 1);
+                const y = 2.5; // Above platform
+                const z = -depth / 2 + spacingZ * (row + 1);
+                
+                return new THREE.Vector3(x, y, z);
+            }
+            
+            calculateAmphitheatreSlot(slotIndex) {
+                // 5 tiers, 16 seats per tier (80 total, skip tier 0)
+                const seatsPerTier = 16;
+                const tier = Math.floor(slotIndex / seatsPerTier) + 1; // Tiers 1-5
+                const seat = slotIndex % seatsPerTier;
+                
+                const radius = 30;
+                const tierDepth = 4;
+                const tierHeight = 2;
+                
+                const tierRadius = radius - (tier * tierDepth) + (tierDepth - 1);
+                const angleStep = Math.PI / (seatsPerTier - 1);
+                const angle = seat * angleStep - Math.PI / 2;
+                
+                const x = tierRadius * Math.cos(angle);
+                const y = tier * tierHeight + 0.5;
+                const z = tierRadius * Math.sin(angle);
+                
+                return new THREE.Vector3(x, y, z);
             }
 
             getDomainColor(domain) {
