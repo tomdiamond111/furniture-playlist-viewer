@@ -823,7 +823,7 @@
                     objectIndex: this.objects.length
                 };
                 
-                this.scene.add(mesh);
+                this.furniture.add(mesh); // Make object child of furniture so it rotates with it
                 this.objects.push(mesh);
             }
 
@@ -850,12 +850,13 @@
                     objectIndex: this.objects.length
                 };
                 
-                this.scene.add(mesh);
+                this.furniture.add(mesh); // Make object child of furniture so it rotates with it
                 this.objects.push(mesh);
             }
 
             calculateSlotPosition(slotIndex, furnitureData) {
                 // Arrange objects on vertical wall in grid pattern
+                // Position relative to furniture origin (furniture is at 0,3,0 in world, so objects are relative to 0,0,0)
                 const spacing = 2.5;
                 const capacity = furnitureData.capacity || 10;
                 const cols = Math.ceil(Math.sqrt(capacity));
@@ -864,7 +865,7 @@
                 const row = Math.floor(slotIndex / cols);
                 
                 const startX = -(cols * spacing) / 2 + spacing / 2;
-                const startY = 3 - (Math.ceil(capacity / cols) * spacing) / 2 + spacing / 2;
+                const startY = -(Math.ceil(capacity / cols) * spacing) / 2 + spacing / 2; // Relative to furniture center
                 
                 return new THREE.Vector3(
                     startX + (col * spacing),
