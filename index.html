@@ -281,6 +281,13 @@
                     console.log('ℹ️ Data is not URL-encoded, using as-is');
                 }
                 
+                // Clean the base64 string - remove any whitespace, newlines, or invalid characters
+                const originalLength = furnitureData.length;
+                furnitureData = furnitureData.replace(/[^A-Za-z0-9+/=]/g, '');
+                if (furnitureData.length !== originalLength) {
+                    console.log(`🧹 Cleaned base64 data: ${originalLength} → ${furnitureData.length} chars (removed ${originalLength - furnitureData.length} invalid chars)`);
+                }
+                
                 // Try to decode base64 with better error handling
                 let decodedData;
                 try {
@@ -289,7 +296,7 @@
                 } catch (atobError) {
                     console.error('❌ atob failed:', atobError);
                     console.error('🔍 Problematic data (first 200 chars):', furnitureData.substring(0, 200));
-                    console.error('🔍 Data contains invalid chars:', /[^A-Za-z0-9+/=]/.test(furnitureData));
+                    console.error('🔍 Last 50 chars:', furnitureData.substring(furnitureData.length - 50));
                     throw new Error(`Base64 decode failed: ${atobError.message}. Data might be corrupted or in wrong format.`);
                 }
                 
