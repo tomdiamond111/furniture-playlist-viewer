@@ -331,6 +331,119 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        .view-toggle-btn {
+            background: #667eea;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .view-toggle-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .view-toggle-btn:active {
+            transform: translateY(0);
+        }
+
+        #track-list-view {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        #track-list-view h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .track-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .track-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .track-item-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .track-item-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .track-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .track-item-subtitle {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .back-to-3d-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #667eea;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .back-to-3d-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateX(-5px);
+        }
     </style>
 </head>
 <body>
@@ -360,6 +473,13 @@
                     <div class="stat-label">YouTube Videos</div>
                 </div>
             </div>
+            <button class="view-toggle-btn" onclick="window.furnitureViewer.toggleView()">📋 See Track List</button>
+        </div>
+
+        <div id="track-list-view">
+            <button class="back-to-3d-btn" onclick="window.furnitureViewer.toggleView()">← Back to 3D View</button>
+            <h2 id="track-list-title">Track List</h2>
+            <div id="track-list-items"></div>
         </div>
 
         <div id="playlist" style="display: none;">
@@ -615,6 +735,12 @@
                     furnitureData.position.z
                 );
                 group.rotation.y = furnitureData.rotation;
+                
+                // Store metadata
+                group.userData = {
+                    name: furnitureData.name,
+                    type: furnitureData.type
+                };
                 
                 this.scene.add(group);
                 this.furniture = group;
@@ -919,11 +1045,123 @@
                 document.getElementById('error-message').style.display = 'block';
                 document.getElementById('error-text').textContent = message;
             }
+
+            toggleView() {
+                const trackListView = document.getElementById('track-list-view');
+                const canvasContainer = document.getElementById('canvas-container');
+                const infoPanel = document.getElementById('info-panel');
+                const playlist = document.getElementById('playlist');
+                const controls = document.getElementById('controls');
+                
+                const isTrackListVisible = trackListView.style.display === 'block';
+                
+                if (isTrackListVisible) {
+                    // Switch to 3D view
+                    trackListView.style.display = 'none';
+                    canvasContainer.style.display = 'block';
+                    infoPanel.style.display = 'block';
+                    playlist.style.display = 'block';
+                    controls.style.display = 'flex';
+                } else {
+                    // Switch to 2D track list view
+                    this.populateTrackList();
+                    trackListView.style.display = 'block';
+                    canvasContainer.style.display = 'none';
+                    infoPanel.style.display = 'none';
+                    playlist.style.display = 'none';
+                    controls.style.display = 'none';
+                }
+            }
+
+            populateTrackList() {
+                const container = document.getElementById('track-list-items');
+                const title = document.getElementById('track-list-title');
+                
+                if (this.furniture && this.furniture.userData) {
+                    title.textContent = this.furniture.userData.name || 'Track List';
+                }
+                
+                container.innerHTML = '';
+                
+                this.objects.forEach((obj, index) => {
+                    const objData = obj.userData;
+                    const item = document.createElement('div');
+                    item.className = 'track-item';
+                    
+                    // Thumbnail or icon
+                    if (objData.thumbnailDataUrl && !objData.isLocalMedia) {
+                        const thumb = document.createElement('img');
+                        thumb.className = 'track-item-thumbnail';
+                        thumb.src = objData.thumbnailDataUrl;
+                        item.appendChild(thumb);
+                    } else {
+                        const icon = document.createElement('div');
+                        icon.className = 'track-item-icon';
+                        icon.textContent = this.getObjectIcon(objData);
+                        item.appendChild(icon);
+                    }
+                    
+                    // Info
+                    const info = document.createElement('div');
+                    info.className = 'track-item-info';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'track-item-title';
+                    title.textContent = objData.name || objData.title || `Track ${index + 1}`;
+                    info.appendChild(title);
+                    
+                    const subtitle = document.createElement('div');
+                    subtitle.className = 'track-item-subtitle';
+                    subtitle.textContent = this.getObjectType(objData);
+                    info.appendChild(subtitle);
+                    
+                    item.appendChild(info);
+                    
+                    // Click handler
+                    if (!objData.isLocalMedia && objData.url) {
+                        item.addEventListener('click', () => {
+                            window.open(objData.url, '_blank');
+                        });
+                    } else {
+                        item.style.opacity = '0.5';
+                        item.style.cursor = 'not-allowed';
+                    }
+                    
+                    container.appendChild(item);
+                });
+            }
+
+            getObjectIcon(objData) {
+                if (objData.url) {
+                    if (objData.url.includes('youtube.com') || objData.url.includes('youtu.be')) return '📺';
+                    if (objData.url.includes('spotify.com')) return '🎵';
+                    if (objData.url.includes('tiktok.com')) return '🎬';
+                    if (objData.url.includes('instagram.com')) return '📸';
+                    return '🔗';
+                }
+                if (objData.extension === '.mp3') return '🎵';
+                if (objData.extension === '.mp4') return '🎬';
+                return '📦';
+            }
+
+            getObjectType(objData) {
+                if (objData.isLocalMedia) return 'Local Media (Not Shareable)';
+                if (objData.url) {
+                    if (objData.url.includes('youtube.com') || objData.url.includes('youtu.be')) return 'YouTube Video';
+                    if (objData.url.includes('spotify.com')) return 'Spotify Track';
+                    if (objData.url.includes('tiktok.com')) return 'TikTok Video';
+                    if (objData.url.includes('instagram.com')) return 'Instagram Reel';
+                    return objData.domain || 'Web Link';
+                }
+                if (objData.extension === '.mp3') return 'Audio File';
+                if (objData.extension === '.mp4') return 'Video File';
+                return objData.type || 'Unknown';
+            }
         }
 
         // Initialize viewer
         window.addEventListener('DOMContentLoaded', () => {
-            new FurnitureViewer();
+            window.furnitureViewer = new FurnitureViewer();
         });
     </script>
 </body>
