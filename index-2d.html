@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FirstTaps MV3D Furniture Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .furniture-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .furniture-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        .objects-list {
+            margin-top: 20px;
+        }
+        
+        .object-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .object-icon {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .object-details {
+            flex: 1;
+        }
+        
+        .object-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .object-type {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .error-title {
+            color: #c33;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .cta {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🪑</div>
+            <h1>FirstTaps MV3D</h1>
+            <p class="subtitle">Furniture Playlist Viewer</p>
+        </div>
+        
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading furniture playlist...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- LZ-String compression library for decompression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = window.location.hash.substring(1);
+        
+        async function loadFurnitureData() {
+            try {
+                let furnitureData;
+                
+                // Check for paste service ID
+                if (urlParams.has('paste')) {
+                    const pasteId = urlParams.get('paste');
+                    console.log('📥 Loading from dpaste.com:', pasteId);
+                    
+                    const response = await fetch(`https://dpaste.com/${pasteId}.txt`);
+                    if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
+                    
+                    let rawData = (await response.text()).trim();
+                    console.log('📦 Raw data from dpaste (first 200 chars):', rawData.substring(0, 200));
+                    
+                    // Extract base64 data if it's in URL format
+                    if (rawData.includes('#data=')) {
+                        furnitureData = rawData.split('#data=')[1];
+                        console.log('✂️ Extracted base64 from URL format');
+                    } else {
+                        furnitureData = rawData;
+                    }
+                    
+                } else if (urlParams.has('rentry')) {
+                    const pasteId = urlParams.get('rentry');
+                    console.log('📥 Loading from rentry.co:', pasteId);
+                    
+                    const response = await fetch(`https://rentry.co/${pasteId}/raw`);
+                    if (!response.ok) throw new Error('Failed to fetch from rentry.co');
+                    
+                    let rawData = (await response.text()).trim();
+                    console.log('📦 Raw data from rentry (first 200 chars):', rawData.substring(0, 200));
+                    
+                    // Extract base64 data if it's in URL format
+                    if (rawData.includes('#data=')) {
+                        furnitureData = rawData.split('#data=')[1];
+                        console.log('✂️ Extracted base64 from URL format');
+                    } else {
+                        furnitureData = rawData;
+                    }
+                    
+                } else if (hashParams.startsWith('data=')) {
+                    // Legacy: Direct data in URL hash
+                    console.log('📥 Loading from URL hash (legacy)');
+                    furnitureData = decodeURIComponent(hashParams.substring(5));
+                    
+                } else {
+                    throw new Error('No furniture data found in URL');
+                }
+                
+                console.log('🔍 Final base64 data length:', furnitureData.length);
+                console.log('🔍 First 100 chars of base64:', furnitureData.substring(0, 100));
+                
+                // URL-decode if necessary (in case it's been URL-encoded)
+                try {
+                    const urlDecoded = decodeURIComponent(furnitureData);
+                    if (urlDecoded !== furnitureData) {
+                        console.log('🔓 URL-decoded base64 data');
+                        furnitureData = urlDecoded;
+                    }
+                } catch (e) {
+                    console.log('ℹ️ Data is not URL-encoded, using as-is');
+                }
+                
+                // Clean the LZ-String data - remove any whitespace, newlines
+                const originalLength = furnitureData.length;
+                furnitureData = furnitureData.replace(/\s+/g, '');
+                if (furnitureData.length !== originalLength) {
+                    console.log(`🧹 Cleaned data: ${originalLength} → ${furnitureData.length} chars (removed ${originalLength - furnitureData.length} whitespace chars)`);
+                }
+                
+                // Decompress the data with LZ-String
+                let jsonString;
+                try {
+                    console.log('🗜️ Decompressing with LZ-String...');
+                    
+                    // The data from dpaste is LZ-String compressed with compressToEncodedURIComponent
+                    const decompressed = LZString.decompressFromEncodedURIComponent(furnitureData);
+                    
+                    if (decompressed) {
+                        console.log('✅ Data decompressed successfully with LZ-String');
+                        console.log('📦 Decompressed data length:', decompressed.length, 'chars');
+                        jsonString = decompressed;
+                    } else {
+                        throw new Error('LZ-String decompression returned null - data format may be incorrect');
+                    }
+                } catch (decompressError) {
+                    console.error('❌ LZ-String decompression failed:', decompressError);
+                    throw new Error(`Failed to decompress furniture data: ${decompressError.message}`);
+                }
+                
+                // Parse JSON
+                const furniture = JSON.parse(jsonString);
+                console.log('✅ Furniture loaded:', furniture);
+                
+                displayFurniture(furniture);
+                
+            } catch (error) {
+                console.error('❌ Error loading furniture:', error);
+                showError(error.message);
+            }
+        }
+        
+        function displayFurniture(furniture) {
+            const content = document.getElementById('content');
+            
+            // Count object types
+            const stats = {
+                total: furniture.objects.length,
+                youtube: 0,
+                spotify: 0,
+                links: 0,
+                media: 0
+            };
+            
+            furniture.objects.forEach(obj => {
+                if (obj.url) {
+                    if (obj.url.includes('youtube.com') || obj.url.includes('youtu.be')) {
+                        stats.youtube++;
+                    } else if (obj.url.includes('spotify.com')) {
+                        stats.spotify++;
+                    } else {
+                        stats.links++;
+                    }
+                }
+                if (obj.type === 'app' && obj.extension && ['.mp3', '.mp4'].includes(obj.extension)) {
+                    stats.media++;
+                }
+            });
+            
+            content.innerHTML = `
+                <div class="furniture-info">
+                    <div class="furniture-name">${furniture.furnitureName || 'Shared Furniture'}</div>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value">${stats.total}</div>
+                            <div class="stat-label">Total Objects</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${stats.youtube}</div>
+                            <div class="stat-label">YouTube</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${stats.spotify}</div>
+                            <div class="stat-label">Spotify</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${stats.links}</div>
+                            <div class="stat-label">Links</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="objects-list">
+                    <h3 style="margin-bottom: 15px; color: #333;">Objects in this playlist:</h3>
+                    ${furniture.objects.map((obj, index) => `
+                        <div class="object-item">
+                            <div class="object-icon">${getObjectIcon(obj)}</div>
+                            <div class="object-details">
+                                <div class="object-name">${obj.name || `Object ${index + 1}`}</div>
+                                <div class="object-type">${getObjectType(obj)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="cta">
+                    <p style="color: #666; margin-bottom: 15px;">Want to explore this in 3D?</p>
+                    <a href="https://www.firsttaps.com" class="cta-button">
+                        Get FirstTaps MV3D
+                    </a>
+                    <p style="color: #999; margin-top: 15px; font-size: 12px;">
+                        Available on Google Play
+                    </p>
+                </div>
+            `;
+        }
+        
+        function getObjectIcon(obj) {
+            if (obj.url) {
+                if (obj.url.includes('youtube.com') || obj.url.includes('youtu.be')) return '📺';
+                if (obj.url.includes('spotify.com')) return '🎵';
+                if (obj.url.includes('tiktok.com')) return '🎬';
+                if (obj.url.includes('instagram.com')) return '📸';
+                return '🔗';
+            }
+            if (obj.extension === '.mp3') return '🎵';
+            if (obj.extension === '.mp4') return '🎬';
+            return '📦';
+        }
+        
+        function getObjectType(obj) {
+            if (obj.url) {
+                if (obj.url.includes('youtube.com') || obj.url.includes('youtu.be')) return 'YouTube Video';
+                if (obj.url.includes('spotify.com')) return 'Spotify Track';
+                if (obj.url.includes('tiktok.com')) return 'TikTok Video';
+                if (obj.url.includes('instagram.com')) return 'Instagram Reel';
+                return 'Web Link';
+            }
+            if (obj.extension === '.mp3') return 'Audio File';
+            if (obj.extension === '.mp4') return 'Video File';
+            return obj.type || 'Unknown';
+        }
+        
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-title">Unable to Load Furniture</div>
+                    <p>${message}</p>
+                    <p style="margin-top: 15px;">
+                        <a href="https://www.firsttaps.com" style="color: #667eea;">Visit FirstTaps MV3D</a>
+                    </p>
+                </div>
+            `;
+        }
+        
+        // Start loading
+        loadFurnitureData();
+    </script>
+</body>
+</html>
