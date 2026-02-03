@@ -544,8 +544,13 @@
             }
         }
         
-        /* Landscape mode optimizations */
-        @media (max-width: 768px) and (orientation: landscape) {
+        /* Landscape mode optimizations - use max-height since width can be large in landscape */
+        @media (max-height: 500px) and (orientation: landscape) {
+            /* Hide info panel on mobile landscape */
+            #info-panel {
+                display: none !important;
+            }
+            
             #playlist {
                 width: 140px;
                 top: 5px;
