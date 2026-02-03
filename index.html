@@ -229,7 +229,7 @@
                     const response = await fetch(`https://dpaste.com/${pasteId}.txt`);
                     if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
                     
-                    furnitureData = await response.text();
+                    furnitureData = (await response.text()).trim();
                     
                 } else if (urlParams.has('rentry')) {
                     const pasteId = urlParams.get('rentry');
@@ -238,7 +238,7 @@
                     const response = await fetch(`https://rentry.co/${pasteId}/raw`);
                     if (!response.ok) throw new Error('Failed to fetch from rentry.co');
                     
-                    furnitureData = await response.text();
+                    furnitureData = (await response.text()).trim();
                     
                 } else if (hashParams.startsWith('data=')) {
                     // Legacy: Direct data in URL hash
