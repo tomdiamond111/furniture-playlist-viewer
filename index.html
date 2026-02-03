@@ -539,18 +539,59 @@
             
             #controls {
                 bottom: 170px;
+                left: 50%;
+                transform: translateX(-50%);
             }
         }
         
         /* Landscape mode optimizations */
         @media (max-width: 768px) and (orientation: landscape) {
             #playlist {
-                width: 160px;
+                width: 140px;
+                top: 5px;
+                bottom: 5px;
+                right: 5px;
+                padding: 8px;
+            }
+            
+            #playlist h2 {
+                font-size: 12px;
+            }
+            
+            .playlist-item {
+                padding: 6px;
+                margin-bottom: 6px;
             }
             
             .playlist-item-thumbnail {
-                width: 35px;
-                height: 35px;
+                width: 30px;
+                height: 30px;
+            }
+            
+            .playlist-item-title {
+                font-size: 10px;
+            }
+            
+            .playlist-item-subtitle {
+                font-size: 8px;
+            }
+            
+            #controls {
+                left: 5px;
+                bottom: 5px;
+                padding: 8px;
+                gap: 6px;
+            }
+            
+            #controls button {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            #zoom-slider {
+                height: 60px;
+                width: 20px;
             }
         }
         
