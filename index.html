@@ -270,8 +270,31 @@
                 console.log('🔍 Final base64 data length:', furnitureData.length);
                 console.log('🔍 First 100 chars of base64:', furnitureData.substring(0, 100));
                 
-                // Parse and display furniture data
-                const furniture = JSON.parse(atob(furnitureData));
+                // URL-decode if necessary (in case it's been URL-encoded)
+                try {
+                    const urlDecoded = decodeURIComponent(furnitureData);
+                    if (urlDecoded !== furnitureData) {
+                        console.log('🔓 URL-decoded base64 data');
+                        furnitureData = urlDecoded;
+                    }
+                } catch (e) {
+                    console.log('ℹ️ Data is not URL-encoded, using as-is');
+                }
+                
+                // Try to decode base64 with better error handling
+                let decodedData;
+                try {
+                    decodedData = atob(furnitureData);
+                    console.log('✅ Base64 decoded successfully');
+                } catch (atobError) {
+                    console.error('❌ atob failed:', atobError);
+                    console.error('🔍 Problematic data (first 200 chars):', furnitureData.substring(0, 200));
+                    console.error('🔍 Data contains invalid chars:', /[^A-Za-z0-9+/=]/.test(furnitureData));
+                    throw new Error(`Base64 decode failed: ${atobError.message}. Data might be corrupted or in wrong format.`);
+                }
+                
+                // Parse JSON
+                const furniture = JSON.parse(decodedData);
                 console.log('✅ Furniture loaded:', furniture);
                 
                 displayFurniture(furniture);
