@@ -502,7 +502,7 @@
             
             <div class="zoom-control">
                 <label>Zoom</label>
-                <input type="range" id="zoom-slider" min="5" max="50" value="20" orient="vertical">
+                <input type="range" id="zoom-slider" min="5" max="50" value="25" orient="vertical">
             </div>
         </div>this.cameraTarget = new THREE.Vector3(0, 0, 0);
                 this.cameraDistance = 20;
@@ -525,9 +525,11 @@
                 this.furniture = null;
                 this.objects = [];
                 this.currentPlayingIndex = -1;
-                this.cameraTarget = new THREE.Vector3(0, 0, 0);
-                this.cameraDistance = 20;
+                this.cameraTarget = new THREE.Vector3(0, 2, 0); // Center on furniture at height 2
+                this.cameraDistance = 25; // Zoom out more
                 this.isRotating = false;
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
                 
                 this.init();
             }
@@ -623,8 +625,8 @@
                     0.1,
                     1000
                 );
-                this.camera.position.set(0, 8, 20);
-                this.camera.lookAt(0, 0, 0);
+                this.camera.position.set(0, 5, 25); // Lower and further back
+                this.camera.lookAt(0, 2, 0); // Look at furniture center
                 
                 // Renderer
                 this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -640,18 +642,39 @@
                 directionalLight.position.set(5, 10, 7.5);
                 this.scene.add(directionalLight);
                 
-                // Double-tap rotation detection
+                // Double-tap detection for objects/furniture
                 let lastTapTime = 0;
                 this.renderer.domElement.addEventListener('click', (e) => {
                     const currentTime = Date.now();
                     const tapGap = currentTime - lastTapTime;
                     
                     if (tapGap < 300 && tapGap > 0) {
-                        // Double tap detected - rotate furniture 90 degrees
-                        console.log('🔄 Double-tap detected - rotating furniture');
-                        if (this.furniture) {
-                            const targetRotation = this.furniture.rotation.y + Math.PI / 2;
-                            this.animateFurnitureRotation(targetRotation);
+                        // Double tap detected - check what was clicked
+                        console.log('🔄 Double-tap detected');
+                        
+                        // Calculate mouse position
+                        const rect = this.renderer.domElement.getBoundingClientRect();
+                        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                        
+                        // Raycast to detect what was clicked
+                        this.raycaster.setFromCamera(this.mouse, this.camera);
+                        const intersects = this.raycaster.intersectObjects(this.objects, false);
+                        
+                        if (intersects.length > 0) {
+                            // Clicked on an object - open its link
+                            const clickedObject = intersects[0].object;
+                            if (clickedObject.userData && clickedObject.userData.url && !clickedObject.userData.isLocalMedia) {
+                                console.log('🔗 Opening object link:', clickedObject.userData.url);
+                                window.open(clickedObject.userData.url, '_blank');
+                            }
+                        } else {
+                            // Clicked on furniture/empty space - rotate furniture
+                            if (this.furniture) {
+                                console.log('🔄 Rotating furniture');
+                                const targetRotation = this.furniture.rotation.y + Math.PI / 2;
+                                this.animateFurnitureRotation(targetRotation);
+                            }
                         }
                     }
                     
@@ -718,8 +741,8 @@
                 // Create simple furniture structure based on type
                 const group = new THREE.Group();
                 
-                // Create base platform
-                const geometry = new THREE.BoxGeometry(12, 0.5, 4);
+                // Create wall (standing upright on Y axis)
+                const geometry = new THREE.BoxGeometry(12, 6, 0.5); // Width, Height, Depth
                 const material = new THREE.MeshStandardMaterial({
                     color: this.getStyleColor(furnitureData.style),
                     metalness: 0.3,
@@ -728,13 +751,8 @@
                 const mesh = new THREE.Mesh(geometry, material);
                 group.add(mesh);
                 
-                // Position and rotate
-                group.position.set(
-                    furnitureData.position.x,
-                    furnitureData.position.y,
-                    furnitureData.position.z
-                );
-                group.rotation.y = furnitureData.rotation;
+                // Position at origin, wall stands vertically
+                group.position.set(0, 3, 0); // Center at height 3
                 
                 // Store metadata
                 group.userData = {
@@ -837,15 +855,21 @@
             }
 
             calculateSlotPosition(slotIndex, furnitureData) {
-                // Simple linear arrangement for demo
+                // Arrange objects on vertical wall in grid pattern
                 const spacing = 2.5;
-                const capacity = furnitureData.capacity;
-                const startX = -(capacity * spacing) / 2 + spacing / 2;
+                const capacity = furnitureData.capacity || 10;
+                const cols = Math.ceil(Math.sqrt(capacity));
+                
+                const col = slotIndex % cols;
+                const row = Math.floor(slotIndex / cols);
+                
+                const startX = -(cols * spacing) / 2 + spacing / 2;
+                const startY = 3 - (Math.ceil(capacity / cols) * spacing) / 2 + spacing / 2;
                 
                 return new THREE.Vector3(
-                    startX + (slotIndex * spacing),
-                    furnitureData.position.y + 1.5,
-                    furnitureData.position.z
+                    startX + (col * spacing),
+                    startY + (row * spacing),
+                    0.3 // Slightly in front of wall
                 );
             }
 
