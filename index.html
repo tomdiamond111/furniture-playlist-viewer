@@ -526,7 +526,7 @@
                 this.objects = [];
                 this.currentPlayingIndex = -1;
                 this.cameraTarget = new THREE.Vector3(0, 2, 0); // Center on furniture at height 2
-                this.cameraDistance = 25; // Zoom out more
+                this.cameraDistance = 18; // Zoomed in view
                 this.isRotating = false;
                 this.raycaster = new THREE.Raycaster();
                 this.mouse = new THREE.Vector2();
@@ -672,7 +672,7 @@
                             // Clicked on furniture/empty space - rotate furniture
                             if (this.furniture) {
                                 console.log('🔄 Rotating furniture');
-                                const targetRotation = this.furniture.rotation.y + Math.PI / 2;
+                                const targetRotation = this.furniture.rotation.y + (Math.PI * 0.4); // 72° (20% of full rotation)
                                 this.animateFurnitureRotation(targetRotation);
                             }
                         }
