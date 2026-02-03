@@ -212,6 +212,9 @@
         </div>
     </div>
     
+    <!-- Pako compression library for decompression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    
     <script>
         // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
@@ -300,8 +303,25 @@
                     throw new Error(`Base64 decode failed: ${atobError.message}. Data might be corrupted or in wrong format.`);
                 }
                 
+                // Decompress the data (it's compressed with pako)
+                let jsonString;
+                try {
+                    // Convert base64-decoded string to Uint8Array
+                    const compressedData = Uint8Array.from(decodedData, c => c.charCodeAt(0));
+                    console.log('🗜️ Decompressing data...');
+                    
+                    // Decompress using pako
+                    const decompressed = pako.inflate(compressedData, { to: 'string' });
+                    console.log('✅ Data decompressed successfully');
+                    jsonString = decompressed;
+                } catch (decompressError) {
+                    console.error('❌ Decompression failed:', decompressError);
+                    console.log('ℹ️ Trying to parse as uncompressed JSON...');
+                    jsonString = decodedData;
+                }
+                
                 // Parse JSON
-                const furniture = JSON.parse(decodedData);
+                const furniture = JSON.parse(jsonString);
                 console.log('✅ Furniture loaded:', furniture);
                 
                 displayFurniture(furniture);
