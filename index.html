@@ -18,6 +18,11 @@
             overflow: hidden;
         }
 
+        /* Smooth transitions for orientation changes */
+        #playlist, #controls, #info-panel {
+            transition: all 0.3s ease-in-out;
+        }
+
         #container {
             position: relative;
             width: 100vw;
@@ -101,8 +106,8 @@
         #controls {
             position: absolute;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
+            transform: none;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
             padding: 20px;
@@ -529,58 +534,28 @@
             transform: translateX(-5px);
         }
         
-        /* Mobile Optimizations */
+        /* Mobile Optimizations - Base styles for all mobile devices */
         @media (max-width: 768px) {
             /* Hide info panel on mobile to save space */
             #info-panel {
                 display: none !important;
             }
             
-            /* Make playlist narrower and shorter on mobile */
-            #playlist {
-                width: 200px;
-                top: 10px;
-                bottom: 10px;
-                right: 10px;
-                padding: 12px;
-                font-size: 12px;
-            }
-            
-            #playlist h2 {
-                font-size: 14px;
-                margin-bottom: 10px;
-            }
-            
-            .playlist-item {
-                padding: 8px;
-                margin-bottom: 8px;
-                gap: 8px;
-            }
-            
-            .playlist-item-thumbnail {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .playlist-item-title {
-                font-size: 11px;
-            }
-            
-            .playlist-item-subtitle {
-                font-size: 9px;
-            }
-            
-            /* Make controls more compact */
+            /* Make controls more compact and position on lower left */
             #controls {
                 bottom: 10px;
                 left: 10px;
                 padding: 12px;
-                gap: 8px;
+                gap: 10px;
+                transform: none;
             }
             
-            #controls button {
-                width: 45px;
-                height: 45px;
+            #direction-pad {
+                grid-template-columns: repeat(3, 45px);
+                grid-template-rows: repeat(3, 45px);
+            }
+            
+            #direction-pad button {
                 font-size: 16px;
             }
             
@@ -597,87 +572,90 @@
         /* Portrait mode - stack playlist at bottom */
         @media (max-width: 768px) and (orientation: portrait) {
             #playlist {
-                position: absolute;
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-                top: auto;
-                width: auto;
-                height: 150px;
-                overflow-x: auto;
-                overflow-y: hidden;
+                position: absolute !important;
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 10px !important;
+                top: auto !important;
+                width: auto !important;
+                height: 160px !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
                 white-space: nowrap;
+                padding: 12px !important;
+                font-size: 12px;
             }
             
             #playlist h2 {
+                font-size: 14px;
                 margin-bottom: 8px;
             }
             
             .playlist-item {
-                display: inline-flex;
-                width: 180px;
+                display: inline-flex !important;
+                width: 180px !important;
                 vertical-align: top;
                 margin-right: 8px;
-                margin-bottom: 0;
-            }
-            
-            #controls {
-                bottom: 170px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-        }
-        
-        /* Landscape mode optimizations - use max-height since width can be large in landscape */
-        @media (max-height: 500px) and (orientation: landscape) {
-            /* Hide info panel on mobile landscape */
-            #info-panel {
-                display: none !important;
-            }
-            
-            #playlist {
-                width: 140px;
-                top: 5px;
-                bottom: 5px;
-                right: 5px;
+                margin-bottom: 0 !important;
                 padding: 8px;
-            }
-            
-            /* Move controls to left side in landscape */
-            #controls {
-                bottom: 50%;
-                left: 20px;
-                transform: translateY(50%);
-                flex-direction: column;
-                padding: 15px;
-            }
-
-            #direction-pad {
-                grid-template-columns: repeat(3, 40px);
-                grid-template-rows: repeat(3, 40px);
-                gap: 4px;
-            }
-
-            .zoom-control {
-                order: -1;
-            }
-
-            #zoom-slider {
-                height: 100px;
-            }
-            
-            #playlist h2 {
-                font-size: 12px;
-            }
-            
-            .playlist-item {
-                padding: 6px;
-                margin-bottom: 6px;
+                gap: 8px;
             }
             
             .playlist-item-thumbnail {
-                width: 30px;
-                height: 30px;
+                width: 40px;
+                height: 40px;
+            }
+            
+            .playlist-item-title {
+                font-size: 11px;
+            }
+            
+            .playlist-item-subtitle {
+                font-size: 9px;
+            }
+            
+            /* Keep controls on lower left but move up to avoid playlist */
+            #controls {
+                bottom: 180px !important;
+                left: 10px !important;
+                transform: none !important;
+            }
+        }
+        
+        /* Landscape mode - playlist on right side */
+        @media (max-width: 768px) and (orientation: landscape) {
+            #playlist {
+                position: absolute !important;
+                right: 10px !important;
+                top: 10px !important;
+                bottom: 10px !important;
+                left: auto !important;
+                width: 180px !important;
+                height: auto !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                white-space: normal !important;
+                padding: 10px !important;
+                font-size: 12px;
+            }
+            
+            #playlist h2 {
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+            
+            .playlist-item {
+                display: flex !important;
+                width: auto !important;
+                margin-right: 0 !important;
+                margin-bottom: 8px !important;
+                padding: 6px;
+                gap: 6px;
+            }
+            
+            .playlist-item-thumbnail {
+                width: 35px;
+                height: 35px;
             }
             
             .playlist-item-title {
@@ -688,22 +666,28 @@
                 font-size: 8px;
             }
             
+            /* Controls stay on lower left */
             #controls {
-                left: 5px;
-                bottom: 5px;
-                padding: 8px;
-                gap: 6px;
+                bottom: 10px !important;
+                left: 10px !important;
+                transform: none !important;
+                padding: 10px;
+                gap: 8px;
             }
             
-            #controls button {
-                width: 40px;
-                height: 40px;
+            #direction-pad {
+                grid-template-columns: repeat(3, 40px);
+                grid-template-rows: repeat(3, 40px);
+                gap: 4px;
+            }
+            
+            #direction-pad button {
                 font-size: 14px;
             }
             
             #zoom-slider {
-                height: 60px;
-                width: 20px;
+                height: 70px;
+                width: 22px;
             }
         }
         
@@ -967,6 +951,27 @@
                 
                 // Window resize
                 window.addEventListener('resize', () => this.onWindowResize());
+                
+                // Handle orientation changes
+                window.addEventListener('orientationchange', () => {
+                    // Small delay to ensure browser completes orientation change
+                    setTimeout(() => {
+                        this.onWindowResize();
+                        // Force layout recalculation
+                        document.body.style.display = 'none';
+                        document.body.offsetHeight; // Trigger reflow
+                        document.body.style.display = '';
+                    }, 100);
+                });
+                
+                // Also listen for screen orientation API if available
+                if (screen.orientation) {
+                    screen.orientation.addEventListener('change', () => {
+                        setTimeout(() => {
+                            this.onWindowResize();
+                        }, 100);
+                    });
+                }
                 
                 console.log('✅ Three.js initialized');
             }
