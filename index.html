@@ -356,6 +356,90 @@
             transform: translateY(0);
         }
 
+        .import-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .import-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .import-btn:active {
+            transform: translateY(0);
+        }
+
+        .import-btn-icon {
+            font-size: 18px;
+        }
+
+        .download-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .download-section p {
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .download-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .download-link {
+            display: block;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .download-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(3px);
+        }
+
+        .download-link-icon {
+            margin-right: 6px;
+        }
+
+        .download-link.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .download-link.primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
         #track-list-view {
             display: none;
             position: absolute;
@@ -559,6 +643,29 @@
                 padding: 8px;
             }
             
+            /* Move controls to left side in landscape */
+            #controls {
+                bottom: 50%;
+                left: 20px;
+                transform: translateY(50%);
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            #direction-pad {
+                grid-template-columns: repeat(3, 40px);
+                grid-template-rows: repeat(3, 40px);
+                gap: 4px;
+            }
+
+            .zoom-control {
+                order: -1;
+            }
+
+            #zoom-slider {
+                height: 100px;
+            }
+            
             #playlist h2 {
                 font-size: 12px;
             }
@@ -706,6 +813,7 @@
                 this.isRotating = false;
                 this.raycaster = new THREE.Raycaster();
                 this.mouse = new THREE.Vector2();
+                this.pasteId = null; // Store paste ID for import button
                 
                 this.init();
             }
@@ -750,10 +858,10 @@
                 
                 // Check for dpaste ID
                 if (urlParams.has('paste')) {
-                    const pasteId = urlParams.get('paste');
-                    console.log('📥 Loading from dpaste.com:', pasteId);
+                    this.pasteId = urlParams.get('paste'); // Store for import button
+                    console.log('📥 Loading from dpaste.com:', this.pasteId);
                     
-                    const response = await fetch(`https://dpaste.com/${pasteId}.txt`);
+                    const response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
                     if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
                     
                     let rawData = (await response.text()).trim();
@@ -946,6 +1054,9 @@
                     case 'amphitheatre':
                         this.createAmphitheatre(group, material);
                         group.position.set(0, 0, 0);
+                        // Zoom out and position camera to show front
+                        this.cameraDistance = 40;
+                        this.cameraTarget.set(0, 5, 0);
                         break;
                     default:
                         // Fallback to gallery wall
@@ -1061,6 +1172,19 @@
                     tierMesh.position.set(0, tier * tierHeight + tierHeight / 2, 0);
                     group.add(tierMesh);
                 }
+
+                // Add stepped back wall to match tiered structure
+                for (let tier = 0; tier < tiers; tier++) {
+                    const tierRadius = radius - (tier * tierDepth);
+                    const wallWidth = tierRadius * 2; // Width matches this tier's diameter
+                    const wallThickness = 0.5;
+                    
+                    const wallGeometry = new THREE.BoxGeometry(wallWidth, tierHeight, wallThickness);
+                    const wallMesh = new THREE.Mesh(wallGeometry, material);
+                    wallMesh.position.set(0, tier * tierHeight + tierHeight / 2, 0); // Match tier height
+                    wallMesh.rotation.y = Math.PI / 2; // Rotate 90 degrees to cover the back
+                    group.add(wallMesh);
+                }
             }
 
             getStyleColor(style) {
@@ -1113,8 +1237,13 @@
                 const mesh = new THREE.Mesh(geometry, materials);
                 
                 // Calculate position based on slot
-                const slotPos = this.calculateSlotPosition(objData.slotIndex, furnitureData);
-                mesh.position.copy(slotPos);
+                const slotData = this.calculateSlotPosition(objData.slotIndex, furnitureData);
+                if (slotData.position) {
+                    mesh.position.copy(slotData.position);
+                    mesh.rotation.y = slotData.rotation || 0;
+                } else {
+                    mesh.position.copy(slotData);
+                }
                 
                 // Store metadata
                 mesh.userData = {
@@ -1140,8 +1269,13 @@
                 const mesh = new THREE.Mesh(geometry, material);
                 
                 // Calculate position
-                const slotPos = this.calculateSlotPosition(objData.slotIndex, furnitureData);
-                mesh.position.copy(slotPos);
+                const slotData = this.calculateSlotPosition(objData.slotIndex, furnitureData);
+                if (slotData.position) {
+                    mesh.position.copy(slotData.position);
+                    mesh.rotation.y = slotData.rotation || 0;
+                } else {
+                    mesh.position.copy(slotData);
+                }
                 
                 // Store metadata
                 mesh.userData = {
@@ -1260,7 +1394,13 @@
                 const y = tier * tierHeight + 0.5;
                 const z = tierRadius * Math.sin(angle);
                 
-                return new THREE.Vector3(x, y, z);
+                // Calculate rotation to face toward center/front (lowest tier)
+                const rotation = angle + Math.PI / 2;
+                
+                return {
+                    position: new THREE.Vector3(x, y, z),
+                    rotation: rotation
+                };
             }
 
             getDomainColor(domain) {
@@ -1299,6 +1439,38 @@
                 
                 const youtubeCount = shareData.objects.filter(o => o.domain === 'youtube.com').length;
                 document.getElementById('youtube-count').textContent = youtubeCount;
+                
+                // Add import button if we have a paste ID
+                if (this.pasteId) {
+                    const importBtn = document.createElement('button');
+                    importBtn.className = 'import-btn';
+                    importBtn.innerHTML = '<span class="import-btn-icon">📥</span> Add to My FirstTaps World';
+                    importBtn.onclick = () => {
+                        const deepLink = `firsttapsmv3d://import-furniture?paste=${this.pasteId}`;
+                        window.location.href = deepLink;
+                    };
+                    document.getElementById('info-panel').appendChild(importBtn);
+                }
+                
+                // Add download section
+                const downloadSection = document.createElement('div');
+                downloadSection.className = 'download-section';
+                downloadSection.innerHTML = `
+                    <p>Don't have FirstTaps MV3D?</p>
+                    <div class="download-links">
+                        <a href="https://play.google.com/store/apps/details?id=com.firsttaps.mv3d" 
+                           class="download-link primary" 
+                           target="_blank">
+                            <span class="download-link-icon">💚</span> Get on Google Play
+                        </a>
+                        <a href="https://www.firsttaps.com" 
+                           class="download-link" 
+                           target="_blank">
+                            <span class="download-link-icon">🌐</span> Visit FirstTaps.com
+                        </a>
+                    </div>
+                `;
+                document.getElementById('info-panel').appendChild(downloadSection);
                 
                 document.getElementById('info-panel').style.display = 'block';
                 
@@ -1456,8 +1628,32 @@
 
             showError(message) {
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('error-message').style.display = 'block';
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.style.display = 'block';
                 document.getElementById('error-text').textContent = message;
+                
+                // Add download links to error message if not already present
+                if (!errorDiv.querySelector('.download-section')) {
+                    const downloadSection = document.createElement('div');
+                    downloadSection.className = 'download-section';
+                    downloadSection.style.marginTop = '24px';
+                    downloadSection.innerHTML = `
+                        <p>Get FirstTaps MV3D to create your own furniture playlists:</p>
+                        <div class="download-links">
+                            <a href="https://play.google.com/store/apps/details?id=com.firsttaps.mv3d" 
+                               class="download-link primary" 
+                               target="_blank">
+                                <span class="download-link-icon">💚</span> Get on Google Play
+                            </a>
+                            <a href="https://www.firsttaps.com" 
+                               class="download-link" 
+                               target="_blank">
+                                <span class="download-link-icon">🌐</span> Visit FirstTaps.com
+                            </a>
+                        </div>
+                    `;
+                    errorDiv.appendChild(downloadSection);
+                }
             }
 
             toggleView() {
