@@ -22,11 +22,19 @@
         #playlist, #controls, #info-panel {
             transition: all 0.3s ease-in-out;
         }
+        
+        /* Ensure elements stay within viewport during orientation changes */
+        body.orientation-change #playlist,
+        body.orientation-change #controls {
+            opacity: 0.8;
+        }
 
         #container {
             position: relative;
             width: 100vw;
             height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
         }
 
         #canvas-container {
@@ -95,6 +103,8 @@
             padding: 20px;
             overflow-y: auto;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 40px);
         }
 
         #playlist h2 {
@@ -105,32 +115,34 @@
 
         #controls {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            bottom: 10px;
+            left: 10px;
             transform: none;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             display: flex;
-            gap: 20px;
+            gap: 10px;
             align-items: center;
+            max-width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
         }
 
         #direction-pad {
             display: grid;
-            grid-template-columns: repeat(3, 50px);
-            grid-template-rows: repeat(3, 50px);
-            gap: 5px;
+            grid-template-columns: repeat(3, 35px);
+            grid-template-rows: repeat(3, 35px);
+            gap: 3px;
         }
 
         #direction-pad button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
             color: #fff;
-            font-size: 20px;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -161,33 +173,33 @@
         }
 
         .zoom-control label {
-            font-size: 12px;
+            font-size: 10px;
             color: #ccc;
         }
 
         #zoom-slider {
             writing-mode: bt-lr;
             -webkit-appearance: slider-vertical;
-            width: 30px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.1);
+            width: 20px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
             outline: none;
-            border-radius: 10px;
+            border-radius: 8px;
         }
 
         #zoom-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             background: #667eea;
             cursor: pointer;
             border-radius: 50%;
         }
 
         #zoom-slider::-moz-range-thumb {
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             background: #667eea;
             cursor: pointer;
             border-radius: 50%;
@@ -543,29 +555,45 @@
             
             /* Make controls more compact and position on lower left */
             #controls {
-                bottom: 10px;
-                left: 10px;
-                padding: 12px;
-                gap: 10px;
-                transform: none;
+                bottom: 8px !important;
+                left: 8px !important;
+                padding: 8px !important;
+                gap: 8px !important;
+                transform: none !important;
+                background: rgba(0, 0, 0, 0.4) !important;
             }
             
             #direction-pad {
-                grid-template-columns: repeat(3, 45px);
-                grid-template-rows: repeat(3, 45px);
+                grid-template-columns: repeat(3, 32px) !important;
+                grid-template-rows: repeat(3, 32px) !important;
+                gap: 3px !important;
             }
             
             #direction-pad button {
-                font-size: 16px;
+                font-size: 14px !important;
             }
             
             .zoom-control {
-                gap: 5px;
+                gap: 4px !important;
+            }
+            
+            .zoom-control label {
+                font-size: 9px !important;
             }
             
             #zoom-slider {
-                height: 80px;
-                width: 25px;
+                height: 60px !important;
+                width: 18px !important;
+            }
+            
+            #zoom-slider::-webkit-slider-thumb {
+                width: 18px !important;
+                height: 18px !important;
+            }
+            
+            #zoom-slider::-moz-range-thumb {
+                width: 18px !important;
+                height: 18px !important;
             }
         }
         
@@ -573,51 +601,52 @@
         @media (max-width: 768px) and (orientation: portrait) {
             #playlist {
                 position: absolute !important;
-                left: 10px !important;
-                right: 10px !important;
-                bottom: 10px !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: 8px !important;
                 top: auto !important;
                 width: auto !important;
-                height: 160px !important;
+                height: 150px !important;
                 overflow-x: auto !important;
                 overflow-y: hidden !important;
-                white-space: nowrap;
-                padding: 12px !important;
-                font-size: 12px;
+                white-space: nowrap !important;
+                padding: 10px !important;
+                font-size: 12px !important;
+                display: block !important;
             }
             
             #playlist h2 {
-                font-size: 14px;
-                margin-bottom: 8px;
+                font-size: 13px !important;
+                margin-bottom: 8px !important;
             }
             
             .playlist-item {
                 display: inline-flex !important;
-                width: 180px !important;
-                vertical-align: top;
-                margin-right: 8px;
+                width: 170px !important;
+                vertical-align: top !important;
+                margin-right: 8px !important;
                 margin-bottom: 0 !important;
-                padding: 8px;
-                gap: 8px;
+                padding: 8px !important;
+                gap: 8px !important;
             }
             
             .playlist-item-thumbnail {
-                width: 40px;
-                height: 40px;
+                width: 40px !important;
+                height: 40px !important;
             }
             
             .playlist-item-title {
-                font-size: 11px;
+                font-size: 11px !important;
             }
             
             .playlist-item-subtitle {
-                font-size: 9px;
+                font-size: 9px !important;
             }
             
             /* Keep controls on lower left but move up to avoid playlist */
             #controls {
-                bottom: 180px !important;
-                left: 10px !important;
+                bottom: 168px !important;
+                left: 8px !important;
                 transform: none !important;
             }
         }
@@ -626,68 +655,53 @@
         @media (max-width: 768px) and (orientation: landscape) {
             #playlist {
                 position: absolute !important;
-                right: 10px !important;
-                top: 10px !important;
-                bottom: 10px !important;
+                right: 8px !important;
+                top: 8px !important;
+                bottom: 8px !important;
                 left: auto !important;
-                width: 180px !important;
+                width: 170px !important;
                 height: auto !important;
                 overflow-x: hidden !important;
                 overflow-y: auto !important;
                 white-space: normal !important;
-                padding: 10px !important;
-                font-size: 12px;
+                padding: 8px !important;
+                font-size: 11px !important;
+                display: block !important;
             }
             
             #playlist h2 {
-                font-size: 13px;
-                margin-bottom: 8px;
+                font-size: 12px !important;
+                margin-bottom: 6px !important;
             }
             
             .playlist-item {
                 display: flex !important;
                 width: auto !important;
                 margin-right: 0 !important;
-                margin-bottom: 8px !important;
-                padding: 6px;
-                gap: 6px;
+                margin-bottom: 6px !important;
+                padding: 6px !important;
+                gap: 6px !important;
             }
             
             .playlist-item-thumbnail {
-                width: 35px;
-                height: 35px;
+                width: 32px !important;
+                height: 32px !important;
             }
             
             .playlist-item-title {
-                font-size: 10px;
+                font-size: 10px !important;
             }
             
             .playlist-item-subtitle {
-                font-size: 8px;
+                font-size: 8px !important;
             }
             
             /* Controls stay on lower left */
             #controls {
-                bottom: 10px !important;
-                left: 10px !important;
+                bottom: 8px !important;
+                left: 8px !important;
                 transform: none !important;
-                padding: 10px;
-                gap: 8px;
             }
-            
-            #direction-pad {
-                grid-template-columns: repeat(3, 40px);
-                grid-template-rows: repeat(3, 40px);
-                gap: 4px;
-            }
-            
-            #direction-pad button {
-                font-size: 14px;
-            }
-            
-            #zoom-slider {
-                height: 70px;
-                width: 22px;
             }
         }
         
@@ -952,25 +966,43 @@
                 // Window resize
                 window.addEventListener('resize', () => this.onWindowResize());
                 
-                // Handle orientation changes
-                window.addEventListener('orientationchange', () => {
-                    // Small delay to ensure browser completes orientation change
+                // Handle orientation changes with robust layout fixing
+                const handleOrientationChange = () => {
                     setTimeout(() => {
                         this.onWindowResize();
-                        // Force layout recalculation
-                        document.body.style.display = 'none';
-                        document.body.offsetHeight; // Trigger reflow
-                        document.body.style.display = '';
-                    }, 100);
-                });
+                        
+                        // Force playlist and controls to recalculate positions
+                        const playlist = document.getElementById('playlist');
+                        const controls = document.getElementById('controls');
+                        
+                        if (playlist) {
+                            // Force re-render by toggling display
+                            const currentDisplay = playlist.style.display;
+                            playlist.style.display = 'none';
+                            playlist.offsetHeight; // Trigger reflow
+                            playlist.style.display = currentDisplay || 'block';
+                        }
+                        
+                        if (controls) {
+                            const currentDisplay = controls.style.display;
+                            controls.style.display = 'none';
+                            controls.offsetHeight; // Trigger reflow
+                            controls.style.display = currentDisplay || 'flex';
+                        }
+                        
+                        // Force complete layout recalculation
+                        document.body.classList.add('orientation-change');
+                        requestAnimationFrame(() => {
+                            document.body.classList.remove('orientation-change');
+                        });
+                    }, 150);
+                };
+                
+                window.addEventListener('orientationchange', handleOrientationChange);
                 
                 // Also listen for screen orientation API if available
                 if (screen.orientation) {
-                    screen.orientation.addEventListener('change', () => {
-                        setTimeout(() => {
-                            this.onWindowResize();
-                        }, 100);
-                    });
+                    screen.orientation.addEventListener('change', handleOrientationChange);
                 }
                 
                 console.log('✅ Three.js initialized');
