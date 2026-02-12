@@ -61,6 +61,52 @@
             max-width: 350px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             z-index: 50;
+            transition: all 0.3s ease;
+        }
+
+        #info-panel.collapsed {
+            padding: 10px;
+            max-width: 60px;
+            overflow: hidden;
+        }
+
+        #info-panel.collapsed .info-content {
+            display: none;
+        }
+
+        #info-toggle-btn {
+            background: rgba(102, 126, 234, 0.9);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+            width: 100%;
+        }
+
+        #info-toggle-btn:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: scale(1.05);
+        }
+
+        .logo-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 60;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .logo-container img {
+            height: 40px;
+            width: auto;
+            display: block;
         }
 
         #info-panel h1 {
@@ -612,6 +658,15 @@
         
         /* Portrait mode - stack playlist at bottom */
         @media (max-width: 768px) and (orientation: portrait) {
+            .logo-container {
+                top: 10px !important;
+                right: 10px !important;
+            }
+
+            .logo-container img {
+                height: 35px !important;
+            }
+
             #playlist {
                 position: fixed !important;
                 left: 8px !important;
@@ -670,101 +725,137 @@
         
         /* Landscape mode - playlist on right side */
         @media (max-width: 768px) and (orientation: landscape) {
+            /* Collapsible info panel */
+            #info-panel {
+                top: 5px !important;
+                left: 5px !important;
+                padding: 8px !important;
+                max-width: 50px !important;
+                transition: all 0.3s ease !important;
+            }
+
+            #info-panel.expanded {
+                max-width: 280px !important;
+                padding: 15px !important;
+            }
+
+            #info-toggle-btn {
+                display: block !important;
+            }
+
+            #info-panel.collapsed .info-content {
+                display: none !important;
+            }
+
+            #info-panel.expanded .info-content {
+                display: block !important;
+            }
+
+            .logo-container {
+                top: 5px !important;
+                right: 5px !important;
+            }
+
+            .logo-container img {
+                height: 30px !important;
+            }
+
             #playlist {
                 position: fixed !important;
                 right: 5px !important;
-                top: 5px !important;
+                top: 45px !important;
                 bottom: 5px !important;
                 left: auto !important;
-                width: 150px !important;
-                max-width: 150px !important;
+                width: 120px !important;
+                max-width: 120px !important;
                 height: auto !important;
-                max-height: calc(100vh - 10px) !important;
+                max-height: calc(100vh - 50px) !important;
                 overflow-x: hidden !important;
                 overflow-y: auto !important;
                 white-space: normal !important;
-                padding: 6px !important;
-                font-size: 10px !important;
+                padding: 5px !important;
+                font-size: 9px !important;
                 display: block !important;
             }
             
             #playlist h2 {
-                font-size: 11px !important;
-                margin-bottom: 5px !important;
+                font-size: 10px !important;
+                margin-bottom: 4px !important;
             }
             
             .playlist-item {
                 display: flex !important;
                 width: auto !important;
                 margin-right: 0 !important;
-                margin-bottom: 5px !important;
-                padding: 5px !important;
-                gap: 5px !important;
+                margin-bottom: 4px !important;
+                padding: 4px !important;
+                gap: 4px !important;
             }
             
             .playlist-item-thumbnail {
-                width: 28px !important;
-                height: 28px !important;
+                width: 24px !important;
+                height: 24px !important;
             }
             
             .playlist-item-title {
-                font-size: 9px !important;
+                font-size: 8px !important;
                 line-height: 1.2 !important;
             }
             
             .playlist-item-subtitle {
-                font-size: 8px !important;
+                font-size: 7px !important;
             }
             
             .playlist-item-badge {
-                font-size: 7px !important;
-                padding: 1px 4px !important;
+                font-size: 6px !important;
+                padding: 1px 3px !important;
             }
             
             /* Controls stay on lower left - smaller and more compact */
             #controls {
                 position: fixed !important;
                 bottom: 5px !important;
-                left: 5px !important;
-                padding: 5px !important;
-                gap: 5px !important;
+                left: 65px !important;
+                padding: 6px !important;
+                gap: 6px !important;
                 transform: none !important;
-                max-width: calc(100vw - 170px) !important;
+                max-width: calc(100vw - 200px) !important;
                 max-height: calc(100vh - 10px) !important;
+                background: rgba(0, 0, 0, 0.6) !important;
             }
             
             #direction-pad {
-                grid-template-columns: repeat(3, 28px) !important;
-                grid-template-rows: repeat(3, 28px) !important;
+                grid-template-columns: repeat(3, 30px) !important;
+                grid-template-rows: repeat(3, 30px) !important;
                 gap: 2px !important;
             }
             
             #direction-pad button {
-                font-size: 12px !important;
-                border-radius: 4px !important;
+                font-size: 13px !important;
+                border-radius: 5px !important;
             }
             
             .zoom-control {
-                gap: 3px !important;
+                gap: 4px !important;
             }
             
             .zoom-control label {
-                font-size: 8px !important;
+                font-size: 9px !important;
             }
             
             #zoom-slider {
-                height: 50px !important;
-                width: 16px !important;
+                height: 60px !important;
+                width: 18px !important;
             }
             
             #zoom-slider::-webkit-slider-thumb {
-                width: 16px !important;
-                height: 16px !important;
+                width: 18px !important;
+                height: 18px !important;
             }
             
             #zoom-slider::-moz-range-thumb {
-                width: 16px !important;
-                height: 16px !important;
+                width: 18px !important;
+                height: 18px !important;
             }
         }
         
@@ -794,6 +885,11 @@
     <div id="container">
         <div id="canvas-container"></div>
         
+        <!-- Logo -->
+        <div class="logo-container">
+            <img src="FirstTapsMV3D_logo1.jpg" alt="FirstTaps MV3D">
+        </div>
+
         <div id="loading">
             <div class="spinner"></div>
             <p>Loading shared furniture...</p>
@@ -805,19 +901,22 @@
         </div>
 
         <div id="info-panel" style="display: none;">
-            <h1 id="furniture-name">Loading...</h1>
-            <div class="subtitle" id="furniture-type"></div>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value" id="total-objects">0</div>
-                    <div class="stat-label">Total Items</div>
+            <button id="info-toggle-btn" onclick="window.furnitureViewer.toggleInfoPanel()">ℹ️</button>
+            <div class="info-content">
+                <h1 id="furniture-name">Loading...</h1>
+                <div class="subtitle" id="furniture-type"></div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="total-objects">0</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="youtube-count">0</div>
+                        <div class="stat-label">YouTube Videos</div>
+                    </div>
                 </div>
-                <div class="stat">
-                    <div class="stat-value" id="youtube-count">0</div>
-                    <div class="stat-label">YouTube Videos</div>
-                </div>
+                <button class="view-toggle-btn" onclick="window.furnitureViewer.toggleView()">📋 See Track List</button>
             </div>
-            <button class="view-toggle-btn" onclick="window.furnitureViewer.toggleView()">📋 See Track List</button>
         </div>
 
         <div id="track-list-view">
@@ -1065,6 +1164,15 @@
                         }
                         
                         if (infoPanel) {
+                            // Set info panel state based on orientation and screen size
+                            const isLandscapeMobile = window.innerWidth <= 768 && window.innerWidth > window.innerHeight;
+                            if (isLandscapeMobile) {
+                                infoPanel.classList.add('collapsed');
+                                infoPanel.classList.remove('expanded');
+                            } else {
+                                infoPanel.classList.remove('collapsed');
+                                infoPanel.classList.remove('expanded');
+                            }
                             infoPanel.offsetHeight; // Force reflow
                         }
                         
@@ -1558,6 +1666,9 @@
                 const youtubeCount = shareData.objects.filter(o => o.domain === 'youtube.com').length;
                 document.getElementById('youtube-count').textContent = youtubeCount;
                 
+                // Get the info-content container
+                const infoContent = document.querySelector('#info-panel .info-content');
+                
                 // Add import button if we have a paste ID
                 if (this.pasteId) {
                     const importBtn = document.createElement('button');
@@ -1567,7 +1678,7 @@
                         const deepLink = `firsttapsmv3d://import-furniture?paste=${this.pasteId}`;
                         window.location.href = deepLink;
                     };
-                    document.getElementById('info-panel').appendChild(importBtn);
+                    infoContent.appendChild(importBtn);
                 }
                 
                 // Add download section
@@ -1588,7 +1699,7 @@
                         </a>
                     </div>
                 `;
-                document.getElementById('info-panel').appendChild(downloadSection);
+                infoContent.appendChild(downloadSection);
                 
                 document.getElementById('info-panel').style.display = 'block';
                 
@@ -1857,6 +1968,19 @@
                     
                     container.appendChild(item);
                 });
+            }
+
+            toggleInfoPanel() {
+                const infoPanel = document.getElementById('info-panel');
+                const isExpanded = infoPanel.classList.contains('expanded');
+                
+                if (isExpanded) {
+                    infoPanel.classList.remove('expanded');
+                    infoPanel.classList.add('collapsed');
+                } else {
+                    infoPanel.classList.remove('collapsed');
+                    infoPanel.classList.add('expanded');
+                }
             }
 
             getObjectIcon(objData) {
