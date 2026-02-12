@@ -605,11 +605,6 @@
         
         /* Mobile Optimizations - Base styles for all mobile devices */
         @media (max-width: 768px) {
-            /* Hide info panel on mobile to save space */
-            #info-panel {
-                display: none !important;
-            }
-            
             /* Make controls more compact and position on lower left */
             #controls {
                 position: fixed !important;
@@ -658,6 +653,11 @@
         
         /* Portrait mode - stack playlist at bottom */
         @media (max-width: 768px) and (orientation: portrait) {
+            /* Hide info panel in portrait mode to save space */
+            #info-panel {
+                display: none !important;
+            }
+
             .logo-container {
                 top: 10px !important;
                 right: 10px !important;
@@ -727,6 +727,7 @@
         @media (max-width: 768px) and (orientation: landscape) {
             /* Collapsible info panel */
             #info-panel {
+                display: block !important;
                 top: 5px !important;
                 left: 5px !important;
                 padding: 8px !important;
@@ -1003,6 +1004,12 @@
                     document.getElementById('info-panel').style.display = 'block';
                     document.getElementById('playlist').style.display = 'block';
                     document.getElementById('controls').style.display = 'flex';
+                    
+                    // Initialize info panel collapsed state for landscape mobile
+                    const isLandscapeMobile = window.innerWidth <= 768 && window.innerWidth > window.innerHeight;
+                    if (isLandscapeMobile) {
+                        document.getElementById('info-panel').classList.add('collapsed');
+                    }
                     
                 } catch (error) {
                     this.showError(error.message);
@@ -1842,6 +1849,8 @@
                 
                 // Zoom slider
                 const zoomSlider = document.getElementById('zoom-slider');
+                // Initialize slider value to match current camera distance
+                zoomSlider.value = this.cameraDistance;
                 zoomSlider.addEventListener('input', (e) => {
                     this.cameraDistance = parseFloat(e.target.value);
                 });
