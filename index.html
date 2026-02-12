@@ -71,7 +71,7 @@
         }
 
         #info-panel.collapsed .info-content {
-            display: none;
+            display: none !important;
         }
 
         #info-toggle-btn {
@@ -1274,6 +1274,9 @@
                     case 'riser':
                         this.createRiser(group, material);
                         group.position.set(0, 0, 0);
+                        // Position camera to face front (lowest tier at positive Z)
+                        this.cameraDistance = 22;
+                        this.cameraTarget.set(0, 1.5, 4);
                         break;
                     case 'gallery_wall':
                         this.createGalleryWall(group, material);
@@ -1550,7 +1553,7 @@
                 const row = Math.floor(slotIndex / cols);
                 
                 const x = (col - 1) * spacingX; // Center: -6, 0, 6
-                const y = row * spacingY + 1.75; // 1.75, 5.25
+                const y = row * spacingY + 1.4; // On shelf (0.15 above shelf surface) + half object height (1.25)
                 const z = 0.5; // In front of back panel
                 
                 return new THREE.Vector3(x, y, z);
@@ -1570,10 +1573,13 @@
                 const spacingX = usableWidth / (objectsPerTier - 1);
                 
                 const x = -usableWidth / 2 + (posInTier * spacingX);
-                const y = (2 - tier) * tierHeight + 0.5; // Back row highest
+                const y = (2 - tier) * tierHeight + 1.25; // On top of platform (0.3) + half object height (1.25)
                 const z = tierDepth * (2 - tier); // Reverse: front (tier 2) at z=0, back (tier 0) at z=8
                 
-                return new THREE.Vector3(x, y, z);
+                return {
+                    position: new THREE.Vector3(x, y, z),
+                    rotation: Math.PI // Rotate 180 degrees to face forward
+                };
             }
             
             calculateGalleryWallSlot(slotIndex) {
@@ -1596,6 +1602,7 @@
                 const depth = isLarge ? 25 : 15;
                 const rows = isLarge ? 7 : 4;
                 const cols = isLarge ? 7 : 4;
+                const platformHeight = 2;
                 const spacingX = width / (cols + 1);
                 const spacingZ = depth / (rows + 1);
                 
@@ -1603,7 +1610,7 @@
                 const row = Math.floor(slotIndex / cols);
                 
                 const x = -width / 2 + spacingX * (col + 1);
-                const y = 2.5; // Above platform
+                const y = platformHeight + 1.25; // On top of platform + half object height
                 const z = -depth / 2 + spacingZ * (row + 1);
                 
                 return new THREE.Vector3(x, y, z);
@@ -1624,7 +1631,7 @@
                 const angle = seat * angleStep - Math.PI / 2;
                 
                 const x = tierRadius * Math.cos(angle);
-                const y = tier * tierHeight + 0.5;
+                const y = tier * tierHeight + 1.25; // On tier surface + half object height
                 const z = tierRadius * Math.sin(angle);
                 
                 // Calculate rotation to face toward center/front (lowest tier)
