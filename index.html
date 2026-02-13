@@ -977,6 +977,7 @@
                 this.raycaster = new THREE.Raycaster();
                 this.mouse = new THREE.Vector2();
                 this.pasteId = null; // Store paste ID for import button
+                this.backgroundObjects = []; // Store background objects for cleanup
                 
                 this.init();
             }
@@ -1063,6 +1064,7 @@
                 
                 // Scene
                 this.scene = new THREE.Scene();
+                // Default background (will be overridden by world theme)
                 this.scene.background = new THREE.Color(0x1a1a2e);
                 
                 // Camera
@@ -1200,6 +1202,145 @@
                 console.log('✅ Three.js initialized');
             }
             
+            setWorldBackground(worldData) {
+                const worldType = worldData.type || 'green-plane';
+                console.log(`🌍 Setting world background: ${worldType}`);
+                
+                // Remove any existing background objects
+                if (this.backgroundObjects) {
+                    this.backgroundObjects.forEach(obj => {
+                        if (obj.parent) obj.parent.remove(obj);
+                        if (obj.geometry) obj.geometry.dispose();
+                        if (obj.material) obj.material.dispose();
+                    });
+                }
+                this.backgroundObjects = [];
+                
+                switch(worldType) {
+                    case 'space':
+                        this.createSpaceBackground();
+                        break;
+                    case 'ocean':
+                        this.createOceanBackground();
+                        break;
+                    case 'forest':
+                        this.createForestBackground();
+                        break;
+                    case 'dazzle':
+                        this.createDazzleBackground();
+                        break;
+                    case 'cave':
+                        this.createCaveBackground();
+                        break;
+                    case 'christmas':
+                        this.createChristmasBackground();
+                        break;
+                    case 'desert-oasis':
+                        this.createDesertBackground();
+                        break;
+                    case 'tropical-paradise':
+                        this.createTropicalBackground();
+                        break;
+                    case 'flower-wonderland':
+                        this.createFlowerBackground();
+                        break;
+                    case 'green-plane':
+                    default:
+                        this.createGreenPlaneBackground();
+                        break;
+                }
+            }
+            
+            createGreenPlaneBackground() {
+                // Sky blue to green gradient
+                this.scene.background = new THREE.Color(0x87CEEB);
+                this.scene.fog = new THREE.Fog(0xcccccc, 100, 500);
+            }
+            
+            createSpaceBackground() {
+                // Deep space black
+                this.scene.background = new THREE.Color(0x000022);
+                
+                // Create starfield
+                const starCount = 800;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(starCount * 3);
+                const colors = new Float32Array(starCount * 3);
+                
+                for (let i = 0; i < starCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 400;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 400;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 400;
+                    
+                    const brightness = 0.7 + Math.random() * 0.3;
+                    colors[i * 3] = brightness;
+                    colors[i * 3 + 1] = brightness;
+                    colors[i * 3 + 2] = brightness;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                const stars = new THREE.Points(geometry, material);
+                this.scene.add(stars);
+                this.backgroundObjects.push(stars);
+            }
+            
+            createOceanBackground() {
+                // Deep ocean blue
+                this.scene.background = new THREE.Color(0x006994);
+                this.scene.fog = new THREE.Fog(0x006994, 50, 300);
+            }
+            
+            createForestBackground() {
+                // Forest green with mist
+                this.scene.background = new THREE.Color(0x2d5016);
+                this.scene.fog = new THREE.Fog(0x3a6020, 40, 250);
+            }
+            
+            createDazzleBackground() {
+                // Warm pink/purple gradient
+                this.scene.background = new THREE.Color(0xE6B8E6);
+                this.scene.fog = new THREE.Fog(0xE6B8E6, 60, 300);
+            }
+            
+            createCaveBackground() {
+                // Dark cave atmosphere
+                this.scene.background = new THREE.Color(0x1a1a1a);
+                this.scene.fog = new THREE.Fog(0x0a0a0a, 20, 150);
+            }
+            
+            createChristmasBackground() {
+                // Snowy white/blue
+                this.scene.background = new THREE.Color(0xE8F4F8);
+                this.scene.fog = new THREE.Fog(0xE8F4F8, 70, 350);
+            }
+            
+            createDesertBackground() {
+                // Sandy desert yellow/orange
+                this.scene.background = new THREE.Color(0xF4C542);
+                this.scene.fog = new THREE.Fog(0xF4C542, 80, 400);
+            }
+            
+            createTropicalBackground() {
+                // Tropical turquoise
+                this.scene.background = new THREE.Color(0x40E0D0);
+                this.scene.fog = new THREE.Fog(0x40E0D0, 60, 320);
+            }
+            
+            createFlowerBackground() {
+                // Soft pastel pink
+                this.scene.background = new THREE.Color(0xFFB6C1);
+                this.scene.fog = new THREE.Fog(0xFFB6C1, 50, 280);
+            }
+
             animateFurnitureRotation(targetRotation) {
                 if (!this.furniture || this.isRotating) return;
                 
@@ -1232,6 +1373,11 @@
                 const objectsData = shareData.objects;
                 
                 console.log(`🪑 Loading furniture: ${furnitureData.name} (${furnitureData.type})`);
+                
+                // Set world background if world data is provided
+                if (shareData.world) {
+                    this.setWorldBackground(shareData.world);
+                }
                 
                 // Create furniture visual
                 this.createFurnitureVisual(furnitureData);
