@@ -583,6 +583,86 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
+        /* Mobile-only simplified info panel */
+        #mobile-info-panel {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 200px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 50;
+            font-size: 12px;
+        }
+
+        #mobile-info-panel h3 {
+            font-size: 13px;
+            margin: 0 0 10px 0;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .mobile-import-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .mobile-import-btn:active {
+            transform: scale(0.98);
+        }
+
+        .mobile-download-section {
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-download-section p {
+            color: #ccc;
+            font-size: 10px;
+            margin-bottom: 6px;
+        }
+
+        .mobile-download-link {
+            display: block;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .mobile-download-link:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-download-link.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
         #track-list-view {
             display: none;
             position: absolute;
@@ -722,9 +802,13 @@
         
         /* Portrait mode - stack playlist at bottom */
         @media (max-width: 768px) and (orientation: portrait) {
-            /* Hide info panel in portrait mode to save space */
+            /* Hide desktop info panel and show mobile version */
             #info-panel {
                 display: none !important;
+            }
+
+            #mobile-info-panel {
+                display: block !important;
             }
 
             .logo-container {
@@ -794,43 +878,18 @@
         
         /* Landscape mode - playlist on right side */
         @media (max-width: 768px) and (orientation: landscape) {
-            /* Hide the default info panel completely in landscape */
+            /* Hide desktop info panel and show mobile version */
             #info-panel {
                 display: none !important;
             }
 
-            /* Show it as a modal overlay when opened */
-            #info-panel.modal-open {
-                display: block !important;
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                max-width: 320px !important;
-                width: 90% !important;
-                padding: 20px !important;
-                z-index: 1000 !important;
-                background: rgba(0, 0, 0, 0.95) !important;
-                border: 2px solid rgba(102, 126, 234, 0.5) !important;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-            }
-
-            #info-panel.modal-open .info-content {
+            #mobile-info-panel {
                 display: block !important;
             }
 
-            #info-panel.modal-open .modal-close-btn {
-                display: flex !important;
-            }
-
-            /* Hide the embedded toggle button */
-            #info-toggle-btn {
-                display: none !important;
-            }
-
-            /* Show the standalone info button */
+            /* Hide the standalone info button - not needed anymore */
             #info-button-landscape {
-                display: block !important;
+                display: none !important;
             }
 
             .logo-container {
@@ -941,6 +1000,21 @@
             }
         }
         
+        /* Desktop and Tablet - hide mobile elements */
+        @media (min-width: 769px) {
+            #mobile-info-panel {
+                display: none !important;
+            }
+            
+            #info-button-landscape {
+                display: none !important;
+            }
+            
+            #modal-backdrop {
+                display: none !important;
+            }
+        }
+        
         /* Tablet adjustments */
         @media (min-width: 769px) and (max-width: 1024px) {
             #info-panel {
@@ -1005,6 +1079,25 @@
                     </div>
                 </div>
                 <button class="view-toggle-btn" onclick="window.furnitureViewer.toggleView()">📋 See Track List</button>
+            </div>
+        </div>
+
+        <!-- Simplified Mobile Info Panel -->
+        <div id="mobile-info-panel" style="display: none;">
+            <h3 id="mobile-furniture-info">Loading...</h3>
+            <div id="mobile-import-container"></div>
+            <div class="mobile-download-section">
+                <p>Don't have FirstTapsMV3D?</p>
+                <a href="https://play.google.com/store/apps/details?id=com.firsttaps.mv3d" 
+                   class="mobile-download-link primary" 
+                   target="_blank">
+                    💚 Google Play
+                </a>
+                <a href="https://www.firsttaps.com" 
+                   class="mobile-download-link" 
+                   target="_blank">
+                    🌐 FirstTaps.com
+                </a>
             </div>
         </div>
 
@@ -1356,9 +1449,80 @@
             }
             
             createGreenPlaneBackground() {
-                // Sky blue to green gradient
+                // Sky blue background
                 this.scene.background = new THREE.Color(0x87CEEB);
                 this.scene.fog = new THREE.Fog(0xcccccc, 100, 500);
+                
+                // Add ground plane
+                const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x3a7d44,
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = -5;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+                this.backgroundObjects.push(ground);
+                
+                // Add simple trees in the background
+                const treeCount = 20;
+                for (let i = 0; i < treeCount; i++) {
+                    const angle = (i / treeCount) * Math.PI * 2;
+                    const distance = 80 + Math.random() * 100;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    // Tree trunk
+                    const trunkGeometry = new THREE.CylinderGeometry(1.5, 2, 15, 8);
+                    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x4d2f1a });
+                    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                    trunk.position.set(x, 2.5, z);
+                    trunk.castShadow = true;
+                    this.scene.add(trunk);
+                    this.backgroundObjects.push(trunk);
+                    
+                    // Tree foliage
+                    const foliageGeometry = new THREE.SphereGeometry(8, 8, 8);
+                    const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0x2d5016 });
+                    const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+                    foliage.position.set(x, 15, z);
+                    foliage.castShadow = true;
+                    this.scene.add(foliage);
+                    this.backgroundObjects.push(foliage);
+                }
+                
+                // Add simple clouds
+                const cloudCount = 8;
+                for (let i = 0; i < cloudCount; i++) {
+                    const x = (Math.random() - 0.5) * 400;
+                    const y = 40 + Math.random() * 30;
+                    const z = (Math.random() - 0.5) * 400;
+                    
+                    // Create cloud from spheres
+                    const cloudGroup = new THREE.Group();
+                    const puffCount = 3 + Math.floor(Math.random() * 3);
+                    for (let j = 0; j < puffCount; j++) {
+                        const puffGeometry = new THREE.SphereGeometry(4 + Math.random() * 3, 8, 8);
+                        const puffMaterial = new THREE.MeshBasicMaterial({
+                            color: 0xffffff,
+                            transparent: true,
+                            opacity: 0.8
+                        });
+                        const puff = new THREE.Mesh(puffGeometry, puffMaterial);
+                        puff.position.set(
+                            (Math.random() - 0.5) * 10,
+                            (Math.random() - 0.5) * 3,
+                            (Math.random() - 0.5) * 6
+                        );
+                        cloudGroup.add(puff);
+                    }
+                    cloudGroup.position.set(x, y, z);
+                    this.scene.add(cloudGroup);
+                    this.backgroundObjects.push(cloudGroup);
+                }
             }
             
             createSpaceBackground() {
@@ -1887,8 +2051,8 @@
             }
 
             async createLinkObject(objData, furnitureData) {
-                // Create cube for link
-                const geometry = new THREE.BoxGeometry(2, 2.5, 2);
+                // Create cube for link (flatter like a flat screen TV)
+                const geometry = new THREE.BoxGeometry(2, 2.5, 1);
                 
                 // Create materials for each face
                 const materials = [];
@@ -1944,8 +2108,8 @@
             }
 
             createLocalMediaPlaceholder(objData, furnitureData) {
-                // Create placeholder cube for local media
-                const geometry = new THREE.BoxGeometry(2, 2.5, 2);
+                // Create placeholder cube for local media (flatter like a flat screen TV)
+                const geometry = new THREE.BoxGeometry(2, 2.5, 1);
                 const material = new THREE.MeshStandardMaterial({
                     color: 0x555555,
                     metalness: 0.2,
@@ -2086,8 +2250,8 @@
                 const y = tier * tierHeight + 1.25; // On tier surface + half object height
                 const z = tierRadius * Math.sin(angle);
                 
-                // Calculate rotation to face toward center/front (lowest tier)
-                const rotation = angle + Math.PI / 2;
+                // Calculate rotation to face outward toward front (lowest tier)
+                const rotation = angle - Math.PI / 2;
                 
                 return {
                     position: new THREE.Vector3(x, y, z),
@@ -2168,6 +2332,24 @@
                 infoContent.appendChild(downloadSection);
                 
                 document.getElementById('info-panel').style.display = 'block';
+                
+                // Setup mobile info panel
+                document.getElementById('mobile-furniture-info').textContent = `${shareData.furniture.name}: ${shareData.objects.length} items`;
+                
+                // Add import button to mobile panel if we have a paste ID
+                const mobileImportContainer = document.getElementById('mobile-import-container');
+                if (this.pasteId) {
+                    const mobileImportBtn = document.createElement('button');
+                    mobileImportBtn.className = 'mobile-import-btn';
+                    mobileImportBtn.innerHTML = '📥 Add to My FirstTaps World';
+                    mobileImportBtn.onclick = () => {
+                        const deepLink = `firsttapsmv3d://import-furniture?paste=${this.pasteId}`;
+                        window.location.href = deepLink;
+                    };
+                    mobileImportContainer.appendChild(mobileImportBtn);
+                }
+                
+                document.getElementById('mobile-info-panel').style.display = 'block';
                 
                 // Playlist
                 const playlistContainer = document.getElementById('playlist-items');
