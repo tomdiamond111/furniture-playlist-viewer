@@ -1157,6 +1157,14 @@
                 this.mouse = new THREE.Vector2();
                 this.pasteId = null; // Store paste ID for import button
                 this.backgroundObjects = []; // Store background objects for cleanup
+                this.hoveredObject = null; // Track hovered object for glow effect
+                this.isDragging = false; // Track drag state for rotation
+                this.dragStartX = 0;
+                this.dragStartRotation = 0;
+                this.rotationVelocity = 0;
+                this.lastDragX = 0;
+                this.lastDragTime = 0;
+                this.touchDistance = 0; // For pinch-to-zoom
                 
                 this.init();
             }
@@ -1181,11 +1189,14 @@
                     // Start render loop
                     this.animate();
                     
-                    // Hide loading, show UI
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('info-panel').style.display = 'block';
-                    document.getElementById('playlist').style.display = 'block';
-                    document.getElementById('controls').style.display = 'flex';
+                    // Play cinematic intro animation
+                    this.playCinematicIntro(() => {
+                        // Hide loading, show UI after intro
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('info-panel').style.display = 'block';
+                        document.getElementById('playlist').style.display = 'block';
+                        document.getElementById('controls').style.display = 'flex';
+                    });
                     
                 } catch (error) {
                     this.showError(error.message);
@@ -1270,7 +1281,7 @@
                 directionalLight.position.set(5, 10, 7.5);
                 this.scene.add(directionalLight);
                 
-                // Double-tap detection for objects/furniture
+                // Double-tap detection for objects only (furniture uses drag)
                 let lastTapTime = 0;
                 this.renderer.domElement.addEventListener('click', (e) => {
                     const currentTime = Date.now();
@@ -1296,17 +1307,23 @@
                                 console.log('🔗 Opening object link:', clickedObject.userData.url);
                                 window.open(clickedObject.userData.url, '_blank');
                             }
-                        } else {
-                            // Clicked on furniture/empty space - rotate furniture
-                            if (this.furniture) {
-                                console.log('🔄 Rotating furniture');
-                                const targetRotation = this.furniture.rotation.y + (Math.PI * 0.4); // 72° (20% of full rotation)
-                                this.animateFurnitureRotation(targetRotation);
-                            }
                         }
                     }
                     
                     lastTapTime = currentTime;
+                });
+                
+                // Swipe/drag to rotate furniture
+                this.setupDragRotation();
+                
+                // Pinch-to-zoom for mobile
+                this.setupPinchZoom();
+                
+                // Track mouse position for hover effects
+                this.renderer.domElement.addEventListener('mousemove', (e) => {
+                    const rect = this.renderer.domElement.getBoundingClientRect();
+                    this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                    this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
                 });
                 
                 // Window resize with debouncing
@@ -1848,6 +1865,254 @@
                 rotate();
             }
 
+            playCinematicIntro(callback) {
+                // Cinematic intro: zoom in and rotate furniture to show all objects
+                if (!this.furniture) {
+                    callback();
+                    return;
+                }
+                
+                const DURATION = 3000; // 3 seconds
+                const startTime = Date.now();
+                const startDistance = 60;
+                const endDistance = this.cameraDistance;
+                const startHeight = 20;
+                const endHeight = this.cameraTarget.y + 8;
+                const startRotation = 0;
+                const endRotation = Math.PI * 2; // Full 360° rotation
+                
+                // Allow skipping intro with tap/click
+                let skipped = false;
+                const skipIntro = () => {
+                    skipped = true;
+                    this.cameraDistance = endDistance;
+                    if (this.furniture) {
+                        this.furniture.rotation.y = 0;
+                    }
+                    callback();
+                };
+                
+                const onTap = () => {
+                    if (!skipped) {
+                        skipIntro();
+                        this.renderer.domElement.removeEventListener('pointerdown', onTap);
+                    }
+                };
+                
+                this.renderer.domElement.addEventListener('pointerdown', onTap, { once: true });
+                
+                const animateIntro = () => {
+                    if (skipped) return;
+                    
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / DURATION, 1);
+                    
+                    // Ease out cubic for smooth deceleration
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    
+                    // Animate camera zoom
+                    this.cameraDistance = startDistance - (startDistance - endDistance) * eased;
+                    
+                    // Animate camera height
+                    const currentHeight = startHeight - (startHeight - endHeight) * eased;
+                    this.camera.position.y = currentHeight;
+                    
+                    // Rotate furniture to showcase objects
+                    if (this.furniture) {
+                        this.furniture.rotation.y = startRotation + (endRotation - startRotation) * eased;
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateIntro);
+                    } else {
+                        // Intro complete - reset to front-facing view
+                        if (this.furniture) {
+                            this.furniture.rotation.y = 0;
+                        }
+                        this.renderer.domElement.removeEventListener('pointerdown', onTap);
+                        callback();
+                    }
+                };
+                
+                // Start intro animation
+                this.cameraDistance = startDistance;
+                animateIntro();
+            }
+
+            setupDragRotation() {
+                const canvas = this.renderer.domElement;
+                
+                const onPointerDown = (e) => {
+                    this.isDragging = true;
+                    this.dragStartX = e.clientX || (e.touches && e.touches[0].clientX);
+                    this.dragStartRotation = this.furniture ? this.furniture.rotation.y : 0;
+                    this.rotationVelocity = 0;
+                    this.lastDragX = this.dragStartX;
+                    this.lastDragTime = Date.now();
+                    canvas.style.cursor = 'grabbing';
+                };
+                
+                const onPointerMove = (e) => {
+                    if (!this.isDragging || !this.furniture) return;
+                    
+                    const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+                    const deltaX = currentX - this.dragStartX;
+                    const currentTime = Date.now();
+                    
+                    // Calculate rotation (sensitivity)
+                    const rotationAmount = (deltaX / window.innerWidth) * Math.PI * 2;
+                    this.furniture.rotation.y = this.dragStartRotation + rotationAmount;
+                    
+                    // Calculate velocity for momentum
+                    const timeDelta = currentTime - this.lastDragTime;
+                    if (timeDelta > 0) {
+                        this.rotationVelocity = ((currentX - this.lastDragX) / window.innerWidth) * Math.PI * 0.5;
+                    }
+                    
+                    this.lastDragX = currentX;
+                    this.lastDragTime = currentTime;
+                };
+                
+                const onPointerUp = () => {
+                    if (this.isDragging) {
+                        this.isDragging = false;
+                        canvas.style.cursor = 'grab';
+                        
+                        // Snap to nearest 45° if moving slowly
+                        if (Math.abs(this.rotationVelocity) < 0.01 && this.furniture) {
+                            const currentRotation = this.furniture.rotation.y;
+                            const snapAngle = Math.PI / 4; // 45°
+                            const snappedRotation = Math.round(currentRotation / snapAngle) * snapAngle;
+                            const targetRotation = snappedRotation;
+                            
+                            // Smooth snap animation
+                            const startRotation = currentRotation;
+                            const duration = 300;
+                            const startTime = Date.now();
+                            
+                            const snapAnimation = () => {
+                                const elapsed = Date.now() - startTime;
+                                const progress = Math.min(elapsed / duration, 1);
+                                const eased = 1 - Math.pow(1 - progress, 3);
+                                
+                                if (this.furniture) {
+                                    this.furniture.rotation.y = startRotation + (targetRotation - startRotation) * eased;
+                                }
+                                
+                                if (progress < 1) {
+                                    requestAnimationFrame(snapAnimation);
+                                }
+                            };
+                            
+                            snapAnimation();
+                        }
+                    }
+                };
+                
+                // Mouse events
+                canvas.addEventListener('mousedown', onPointerDown);
+                canvas.addEventListener('mousemove', onPointerMove);
+                canvas.addEventListener('mouseup', onPointerUp);
+                canvas.addEventListener('mouseleave', onPointerUp);
+                
+                // Touch events
+                canvas.addEventListener('touchstart', onPointerDown, { passive: true });
+                canvas.addEventListener('touchmove', onPointerMove, { passive: true });
+                canvas.addEventListener('touchend', onPointerUp);
+                
+                canvas.style.cursor = 'grab';
+            }
+
+            setupPinchZoom() {
+                const canvas = this.renderer.domElement;
+                
+                const getTouchDistance = (touches) => {
+                    const dx = touches[0].clientX - touches[1].clientX;
+                    const dy = touches[0].clientY - touches[1].clientY;
+                    return Math.sqrt(dx * dx + dy * dy);
+                };
+                
+                canvas.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        this.touchDistance = getTouchDistance(e.touches);
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+                
+                canvas.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && this.touchDistance > 0) {
+                        const newDistance = getTouchDistance(e.touches);
+                        const scale = newDistance / this.touchDistance;
+                        
+                        // Adjust camera distance (zoom)
+                        this.cameraDistance = Math.max(5, Math.min(50, this.cameraDistance / scale));
+                        
+                        this.touchDistance = newDistance;
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+                
+                canvas.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) {
+                        this.touchDistance = 0;
+                    }
+                });
+            }
+
+            updateObjectHover() {
+                // Raycast mouse position to detect hovered objects
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects(this.objects, false);
+                
+                // Reset previous hovered object
+                if (this.hoveredObject && this.hoveredObject !== (intersects[0]?.object)) {
+                    // Remove glow from all materials
+                    if (Array.isArray(this.hoveredObject.material)) {
+                        this.hoveredObject.material.forEach(mat => {
+                            mat.emissive.setHex(mat.userData.originalEmissive || 0x000000);
+                            mat.emissiveIntensity = mat.userData.originalEmissiveIntensity || 0;
+                        });
+                    } else {
+                        this.hoveredObject.material.emissive.setHex(this.hoveredObject.material.userData.originalEmissive || 0x000000);
+                        this.hoveredObject.material.emissiveIntensity = this.hoveredObject.material.userData.originalEmissiveIntensity || 0;
+                    }
+                    this.hoveredObject = null;
+                }
+                
+                // Apply glow to hovered object
+                if (intersects.length > 0) {
+                    const hoveredObj = intersects[0].object;
+                    if (hoveredObj !== this.hoveredObject) {
+                        this.hoveredObject = hoveredObj;
+                        
+                        // Add glow to all materials
+                        if (Array.isArray(hoveredObj.material)) {
+                            hoveredObj.material.forEach((mat, index) => {
+                                if (!mat.userData.originalEmissive) {
+                                    mat.userData.originalEmissive = mat.emissive.getHex();
+                                    mat.userData.originalEmissiveIntensity = mat.emissiveIntensity || 0;
+                                }
+                                // Front face (index 4) glows more
+                                if (index === 4) {
+                                    mat.emissive.setHex(0x4466ff);
+                                    mat.emissiveIntensity = 0.4;
+                                } else {
+                                    mat.emissive.setHex(0x2244aa);
+                                    mat.emissiveIntensity = 0.2;
+                                }
+                            });
+                        } else {
+                            if (!hoveredObj.material.userData.originalEmissive) {
+                                hoveredObj.material.userData.originalEmissive = hoveredObj.material.emissive.getHex();
+                                hoveredObj.material.userData.originalEmissiveIntensity = hoveredObj.material.emissiveIntensity || 0;
+                            }
+                            hoveredObj.material.emissive.setHex(0x3355cc);
+                            hoveredObj.material.emissiveIntensity = 0.3;
+                        }
+                    }
+                }
+            }
+
             async loadFurniture(shareData) {
                 const furnitureData = shareData.furniture;
                 const objectsData = shareData.objects;
@@ -2062,8 +2327,8 @@
             }
 
             async createLinkObject(objData, furnitureData) {
-                // Create cube for link (flatter like a flat screen TV)
-                const geometry = new THREE.BoxGeometry(2, 2.5, 0.5);
+                // Create cube for link (larger and flatter like a flat screen TV)
+                const geometry = new THREE.BoxGeometry(2.8, 3.5, 0.7);
                 
                 // Create materials for each face
                 const materials = [];
@@ -2081,18 +2346,22 @@
                 // Create materials (6 faces)
                 for (let i = 0; i < 6; i++) {
                     if (i === 4 && thumbnailTexture) {
-                        // Front face with thumbnail
+                        // Front face with thumbnail - enhanced with border glow
                         materials.push(new THREE.MeshStandardMaterial({
                             map: thumbnailTexture,
-                            metalness: 0.1,
-                            roughness: 0.8
+                            metalness: 0.2,
+                            roughness: 0.6,
+                            emissive: 0x111111,
+                            emissiveIntensity: 0.3
                         }));
                     } else {
                         // Other faces with solid color
                         materials.push(new THREE.MeshStandardMaterial({
                             color: this.getDomainColor(objData.domain),
                             metalness: 0.3,
-                            roughness: 0.7
+                            roughness: 0.7,
+                            emissive: 0x000000,
+                            emissiveIntensity: 0
                         }));
                     }
                 }
@@ -2119,8 +2388,8 @@
             }
 
             createLocalMediaPlaceholder(objData, furnitureData) {
-                // Create placeholder cube for local media (flatter like a flat screen TV)
-                const geometry = new THREE.BoxGeometry(2, 2.5, 0.5);
+                // Create placeholder cube for local media (larger and flatter)
+                const geometry = new THREE.BoxGeometry(2.8, 3.5, 0.7);
                 const material = new THREE.MeshStandardMaterial({
                     color: 0x555555,
                     metalness: 0.2,
@@ -2473,7 +2742,18 @@
                 // Update camera position
                 this.updateCameraPosition();
                 
-                // Gentle bob animation for objects (disabled automatic rotation - only on double-tap)
+                // Apply rotation momentum/decay
+                if (!this.isDragging && Math.abs(this.rotationVelocity) > 0.001) {
+                    if (this.furniture) {
+                        this.furniture.rotation.y += this.rotationVelocity;
+                        this.rotationVelocity *= 0.95; // Decay
+                    }
+                }
+                
+                // Object hover glow effect
+                this.updateObjectHover();
+                
+                // Gentle bob animation for objects
                 this.objects.forEach((obj, index) => {
                     const time = Date.now() * 0.001;
                     obj.position.y += Math.sin(time + index) * 0.001;
