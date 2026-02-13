@@ -1253,7 +1253,7 @@
                     0.1,
                     1000
                 );
-                this.camera.position.set(0, 5, -25); // Face the front (lowest tier) of riser
+                this.camera.position.set(0, 5, 25); // Lower and further back
                 this.camera.lookAt(0, 2, 0); // Look at furniture center
                 
                 // Renderer
@@ -1333,6 +1333,21 @@
                         const playlist = document.getElementById('playlist');
                         const controls = document.getElementById('controls');
                         const infoPanel = document.getElementById('info-panel');
+                        const mobileInfoPanel = document.getElementById('mobile-info-panel');
+                        
+                        // Determine if mobile based on screen width
+                        const isMobile = window.innerWidth <= 768;
+                        
+                        // Show/hide appropriate info panel
+                        if (infoPanel && mobileInfoPanel) {
+                            if (isMobile) {
+                                infoPanel.style.display = 'none';
+                                mobileInfoPanel.style.display = 'block';
+                            } else {
+                                infoPanel.style.display = 'block';
+                                mobileInfoPanel.style.display = 'none';
+                            }
+                        }
                         
                         // Remove any conflicting inline styles to let CSS take over
                         if (playlist) {
@@ -1348,15 +1363,6 @@
                         }
                         
                         if (infoPanel) {
-                            // Remove expanded class in landscape to collapse panel
-                            const isLandscapeMobile = window.innerWidth <= 768 && window.innerWidth > window.innerHeight;
-                            if (isLandscapeMobile) {
-                                infoPanel.classList.remove('expanded');
-                                infoPanel.classList.remove('collapsed');
-                            } else {
-                                infoPanel.classList.remove('collapsed');
-                                infoPanel.classList.remove('expanded');
-                            }
                             infoPanel.offsetHeight; // Force reflow
                         }
                         
@@ -1921,6 +1927,11 @@
                     type: furnitureData.type
                 };
                 
+                // Rotate riser 180 degrees so lowest tier faces camera
+                if (type === 'riser') {
+                    group.rotation.y = Math.PI;
+                }
+                
                 this.scene.add(group);
                 this.furniture = group;
             }
@@ -2052,7 +2063,7 @@
 
             async createLinkObject(objData, furnitureData) {
                 // Create cube for link (flatter like a flat screen TV)
-                const geometry = new THREE.BoxGeometry(2, 2.5, 1);
+                const geometry = new THREE.BoxGeometry(2, 2.5, 0.5);
                 
                 // Create materials for each face
                 const materials = [];
@@ -2109,7 +2120,7 @@
 
             createLocalMediaPlaceholder(objData, furnitureData) {
                 // Create placeholder cube for local media (flatter like a flat screen TV)
-                const geometry = new THREE.BoxGeometry(2, 2.5, 1);
+                const geometry = new THREE.BoxGeometry(2, 2.5, 0.5);
                 const material = new THREE.MeshStandardMaterial({
                     color: 0x555555,
                     metalness: 0.2,
@@ -2331,7 +2342,15 @@
                 `;
                 infoContent.appendChild(downloadSection);
                 
-                document.getElementById('info-panel').style.display = 'block';
+                // Show appropriate info panel based on screen size
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    // Mobile: hide full panel, show mobile panel
+                    document.getElementById('info-panel').style.display = 'none';
+                } else {
+                    // Desktop: show full panel
+                    document.getElementById('info-panel').style.display = 'block';
+                }
                 
                 // Setup mobile info panel
                 document.getElementById('mobile-furniture-info').textContent = `${shareData.furniture.name}: ${shareData.objects.length} items`;
@@ -2349,7 +2368,12 @@
                     mobileImportContainer.appendChild(mobileImportBtn);
                 }
                 
-                document.getElementById('mobile-info-panel').style.display = 'block';
+                // Show mobile panel only on mobile
+                if (isMobile) {
+                    document.getElementById('mobile-info-panel').style.display = 'block';
+                } else {
+                    document.getElementById('mobile-info-panel').style.display = 'none';
+                }
                 
                 // Playlist
                 const playlistContainer = document.getElementById('playlist-items');
@@ -2459,11 +2483,11 @@
             }
 
             updateCameraPosition() {
-                // Position camera at distance from target (negative Z to face front)
+                // Position camera at distance from target
                 this.camera.position.set(
                     this.cameraTarget.x,
                     this.cameraTarget.y + 8,
-                    this.cameraTarget.z - this.cameraDistance
+                    this.cameraTarget.z + this.cameraDistance
                 );
                 this.camera.lookAt(this.cameraTarget);
             }
