@@ -109,6 +109,75 @@
             display: block;
         }
 
+        /* Standalone Info Button for landscape mode */
+        #info-button-landscape {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 60;
+            background: rgba(102, 126, 234, 0.9);
+            border: none;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #info-button-landscape:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: scale(1.05);
+        }
+
+        #info-button-landscape:active {
+            transform: scale(0.98);
+        }
+
+        /* Modal backdrop overlay */
+        #modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 900;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        #modal-backdrop.visible {
+            display: block;
+        }
+
+        /* Close button for modal */
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
         #info-panel h1 {
             font-size: 24px;
             margin-bottom: 8px;
@@ -725,32 +794,42 @@
         
         /* Landscape mode - playlist on right side */
         @media (max-width: 768px) and (orientation: landscape) {
-            /* Collapsible info panel - collapsed by default */
+            /* Hide the default info panel completely in landscape */
             #info-panel {
-                display: block !important;
-                top: 5px !important;
-                left: 5px !important;
-                padding: 8px !important;
-                max-width: 50px !important;
-                transition: all 0.3s ease !important;
-            }
-
-            /* Hide content by default in landscape */
-            #info-panel .info-content {
                 display: none !important;
             }
 
-            /* Show content only when expanded */
-            #info-panel.expanded {
-                max-width: 280px !important;
-                padding: 15px !important;
+            /* Show it as a modal overlay when opened */
+            #info-panel.modal-open {
+                display: block !important;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                max-width: 320px !important;
+                width: 90% !important;
+                padding: 20px !important;
+                z-index: 1000 !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                border: 2px solid rgba(102, 126, 234, 0.5) !important;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
             }
 
-            #info-panel.expanded .info-content {
+            #info-panel.modal-open .info-content {
                 display: block !important;
             }
 
+            #info-panel.modal-open .modal-close-btn {
+                display: flex !important;
+            }
+
+            /* Hide the embedded toggle button */
             #info-toggle-btn {
+                display: none !important;
+            }
+
+            /* Show the standalone info button */
+            #info-button-landscape {
                 display: block !important;
             }
 
@@ -893,6 +972,12 @@
             <img src="FirstTapsMV3D_logo1.jpg" alt="FirstTaps MV3D">
         </div>
 
+        <!-- Standalone Info Button (for landscape mode) -->
+        <button id="info-button-landscape" onclick="window.furnitureViewer.toggleInfoPanel()" style="display: none;">ℹ️ Info</button>
+
+        <!-- Modal backdrop -->
+        <div id="modal-backdrop" onclick="window.furnitureViewer.closeInfoPanel()"></div>
+
         <div id="loading">
             <div class="spinner"></div>
             <p>Loading shared furniture...</p>
@@ -904,6 +989,7 @@
         </div>
 
         <div id="info-panel" style="display: none;">
+            <button class="modal-close-btn" onclick="window.furnitureViewer.closeInfoPanel()" style="display: none;">×</button>
             <button id="info-toggle-btn" onclick="window.furnitureViewer.toggleInfoPanel()">ℹ️</button>
             <div class="info-content">
                 <h1 id="furniture-name">Loading...</h1>
@@ -1074,7 +1160,7 @@
                     0.1,
                     1000
                 );
-                this.camera.position.set(0, 5, 25); // Lower and further back
+                this.camera.position.set(0, 5, -25); // Face the front (lowest tier) of riser
                 this.camera.lookAt(0, 2, 0); // Look at furniture center
                 
                 // Renderer
@@ -2191,11 +2277,11 @@
             }
 
             updateCameraPosition() {
-                // Position camera at distance from target
+                // Position camera at distance from target (negative Z to face front)
                 this.camera.position.set(
                     this.cameraTarget.x,
                     this.cameraTarget.y + 8,
-                    this.cameraTarget.z + this.cameraDistance
+                    this.cameraTarget.z - this.cameraDistance
                 );
                 this.camera.lookAt(this.cameraTarget);
             }
@@ -2354,15 +2440,39 @@
 
             toggleInfoPanel() {
                 const infoPanel = document.getElementById('info-panel');
-                const isExpanded = infoPanel.classList.contains('expanded');
+                const backdrop = document.getElementById('modal-backdrop');
+                const isLandscape = window.matchMedia('(max-width: 768px) and (orientation: landscape)').matches;
                 
-                if (isExpanded) {
-                    infoPanel.classList.remove('expanded');
-                    infoPanel.classList.add('collapsed');
+                if (isLandscape) {
+                    // In landscape mode, use modal approach
+                    const isOpen = infoPanel.classList.contains('modal-open');
+                    
+                    if (isOpen) {
+                        this.closeInfoPanel();
+                    } else {
+                        infoPanel.classList.add('modal-open');
+                        backdrop.classList.add('visible');
+                    }
                 } else {
-                    infoPanel.classList.remove('collapsed');
-                    infoPanel.classList.add('expanded');
+                    // In portrait mode, use expand/collapse approach
+                    const isExpanded = infoPanel.classList.contains('expanded');
+                    
+                    if (isExpanded) {
+                        infoPanel.classList.remove('expanded');
+                        infoPanel.classList.add('collapsed');
+                    } else {
+                        infoPanel.classList.remove('collapsed');
+                        infoPanel.classList.add('expanded');
+                    }
                 }
+            }
+
+            closeInfoPanel() {
+                const infoPanel = document.getElementById('info-panel');
+                const backdrop = document.getElementById('modal-backdrop');
+                
+                infoPanel.classList.remove('modal-open');
+                backdrop.classList.remove('visible');
             }
 
             getObjectIcon(objData) {
