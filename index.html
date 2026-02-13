@@ -1244,6 +1244,24 @@
                     case 'flower-wonderland':
                         this.createFlowerBackground();
                         break;
+                    case 'record-store':
+                        this.createRecordStoreBackground();
+                        break;
+                    case 'music-festival':
+                        this.createMusicFestivalBackground();
+                        break;
+                    case 'future-car-gallery':
+                        this.createCarGalleryBackground();
+                        break;
+                    case 'modern-gallery-clean':
+                        this.createModernGalleryCleanBackground();
+                        break;
+                    case 'modern-gallery-dark':
+                        this.createModernGalleryDarkBackground();
+                        break;
+                    case 'modern-gallery-warm':
+                        this.createModernGalleryWarmBackground();
+                        break;
                     case 'green-plane':
                     default:
                         this.createGreenPlaneBackground();
@@ -1339,6 +1357,212 @@
                 // Soft pastel pink
                 this.scene.background = new THREE.Color(0xFFB6C1);
                 this.scene.fog = new THREE.Fog(0xFFB6C1, 50, 280);
+            }
+            
+            createRecordStoreBackground() {
+                // Warm amber/brown atmosphere - cozy record store
+                this.scene.background = new THREE.Color(0x4A3520);
+                this.scene.fog = new THREE.Fog(0x4A3520, 150, 400);
+                
+                // Add warm ambient particles for atmosphere
+                const particleCount = 150;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 1] = Math.random() * 100;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+                    
+                    // Warm amber/orange glow particles
+                    colors[i * 3] = 1.0;
+                    colors[i * 3 + 1] = 0.6 + Math.random() * 0.2;
+                    colors[i * 3 + 2] = 0.3;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 3,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
+            }
+            
+            createMusicFestivalBackground() {
+                // Evening/dusk atmosphere - outdoor concert
+                this.scene.background = new THREE.Color(0x1a1a2e);
+                this.scene.fog = new THREE.Fog(0x1a1a2e, 100, 500);
+                
+                // Add colored stage light particles
+                const particleCount = 200;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 300;
+                    positions[i * 3 + 1] = Math.random() * 150;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 300;
+                    
+                    // Random stage light colors (pink, cyan, yellow)
+                    const colorType = Math.random();
+                    if (colorType < 0.33) {
+                        // Pink
+                        colors[i * 3] = 1.0;
+                        colors[i * 3 + 1] = 0.0;
+                        colors[i * 3 + 2] = 0.4;
+                    } else if (colorType < 0.66) {
+                        // Cyan
+                        colors[i * 3] = 0.0;
+                        colors[i * 3 + 1] = 1.0;
+                        colors[i * 3 + 2] = 1.0;
+                    } else {
+                        // Yellow
+                        colors[i * 3] = 1.0;
+                        colors[i * 3 + 1] = 1.0;
+                        colors[i * 3 + 2] = 0.0;
+                    }
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 4,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
+            }
+            
+            createCarGalleryBackground() {
+                // Dark tech atmosphere with electric blue accents
+                this.scene.background = new THREE.Color(0x0a0a0f);
+                this.scene.fog = new THREE.Fog(0x0a0a0f, 80, 350);
+                
+                // Add electric blue tech particles
+                const particleCount = 120;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 250;
+                    positions[i * 3 + 1] = Math.random() * 80;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 250;
+                    
+                    // Electric blue/cyan tech glow
+                    colors[i * 3] = 0.0;
+                    colors[i * 3 + 1] = 0.7 + Math.random() * 0.3;
+                    colors[i * 3 + 2] = 1.0;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
+            }
+            
+            createModernGalleryCleanBackground() {
+                // Bright, clean white gallery
+                this.scene.background = new THREE.Color(0xF5F5F5);
+                this.scene.fog = new THREE.Fog(0xF5F5F5, 100, 400);
+            }
+            
+            createModernGalleryDarkBackground() {
+                // Dark, moody gallery
+                this.scene.background = new THREE.Color(0x1a1a1a);
+                this.scene.fog = new THREE.Fog(0x1a1a1a, 60, 300);
+                
+                // Subtle dim spotlights
+                const particleCount = 80;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 180;
+                    positions[i * 3 + 1] = 30 + Math.random() * 40;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 180;
+                    
+                    // Dim white/warm spotlight glow
+                    const brightness = 0.5 + Math.random() * 0.3;
+                    colors[i * 3] = brightness;
+                    colors[i * 3 + 1] = brightness * 0.95;
+                    colors[i * 3 + 2] = brightness * 0.9;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 3,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
+            }
+            
+            createModernGalleryWarmBackground() {
+                // Warm beige/brown gallery
+                this.scene.background = new THREE.Color(0xE8DCC8);
+                this.scene.fog = new THREE.Fog(0xE8DCC8, 90, 380);
+                
+                // Warm ambient light particles
+                const particleCount = 100;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 1] = Math.random() * 90;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+                    
+                    // Soft warm glow
+                    colors[i * 3] = 1.0;
+                    colors[i * 3 + 1] = 0.8 + Math.random() * 0.2;
+                    colors[i * 3 + 2] = 0.6 + Math.random() * 0.2;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.35
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
             }
 
             animateFurnitureRotation(targetRotation) {
