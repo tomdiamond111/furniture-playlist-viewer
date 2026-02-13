@@ -725,7 +725,7 @@
         
         /* Landscape mode - playlist on right side */
         @media (max-width: 768px) and (orientation: landscape) {
-            /* Collapsible info panel */
+            /* Collapsible info panel - collapsed by default */
             #info-panel {
                 display: block !important;
                 top: 5px !important;
@@ -735,20 +735,22 @@
                 transition: all 0.3s ease !important;
             }
 
+            /* Hide content by default in landscape */
+            #info-panel .info-content {
+                display: none !important;
+            }
+
+            /* Show content only when expanded */
             #info-panel.expanded {
                 max-width: 280px !important;
                 padding: 15px !important;
             }
 
-            #info-toggle-btn {
+            #info-panel.expanded .info-content {
                 display: block !important;
             }
 
-            #info-panel.collapsed .info-content {
-                display: none !important;
-            }
-
-            #info-panel.expanded .info-content {
+            #info-toggle-btn {
                 display: block !important;
             }
 
@@ -1005,12 +1007,6 @@
                     document.getElementById('playlist').style.display = 'block';
                     document.getElementById('controls').style.display = 'flex';
                     
-                    // Initialize info panel collapsed state for landscape mobile
-                    const isLandscapeMobile = window.innerWidth <= 768 && window.innerWidth > window.innerHeight;
-                    if (isLandscapeMobile) {
-                        document.getElementById('info-panel').classList.add('collapsed');
-                    }
-                    
                 } catch (error) {
                     this.showError(error.message);
                 }
@@ -1171,11 +1167,11 @@
                         }
                         
                         if (infoPanel) {
-                            // Set info panel state based on orientation and screen size
+                            // Remove expanded class in landscape to collapse panel
                             const isLandscapeMobile = window.innerWidth <= 768 && window.innerWidth > window.innerHeight;
                             if (isLandscapeMobile) {
-                                infoPanel.classList.add('collapsed');
                                 infoPanel.classList.remove('expanded');
+                                infoPanel.classList.remove('collapsed');
                             } else {
                                 infoPanel.classList.remove('collapsed');
                                 infoPanel.classList.remove('expanded');
