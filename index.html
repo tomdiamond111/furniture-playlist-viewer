@@ -1592,48 +1592,645 @@
                 // Deep ocean blue
                 this.scene.background = new THREE.Color(0x006994);
                 this.scene.fog = new THREE.Fog(0x006994, 50, 300);
+                
+                // Add ocean floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x1a4d5c,
+                    roughness: 0.95,
+                    metalness: 0.05
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add floating particles for underwater atmosphere
+                const particleCount = 200;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 300;
+                    positions[i * 3 + 1] = Math.random() * 100;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 300;
+                    
+                    // Light blue bubbles/particles
+                    colors[i * 3] = 0.3 + Math.random() * 0.3;
+                    colors[i * 3 + 1] = 0.7 + Math.random() * 0.3;
+                    colors[i * 3 + 2] = 1.0;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 3,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
+                
+                // Add coral/rock formations
+                const rockCount = 15;
+                for (let i = 0; i < rockCount; i++) {
+                    const angle = (i / rockCount) * Math.PI * 2;
+                    const distance = 100 + Math.random() * 80;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    const height = 5 + Math.random() * 10;
+                    const rockGeometry = new THREE.ConeGeometry(3 + Math.random() * 2, height, 6);
+                    const rockMaterial = new THREE.MeshStandardMaterial({
+                        color: Math.random() > 0.5 ? 0x2d5555 : 0xcc5577,
+                        roughness: 0.8
+                    });
+                    const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+                    rock.position.set(x, -5 + height / 2, z);
+                    rock.rotation.y = Math.random() * Math.PI;
+                    this.scene.add(rock);
+                    this.backgroundObjects.push(rock);
+                }
             }
             
             createForestBackground() {
                 // Forest green with mist
                 this.scene.background = new THREE.Color(0x2d5016);
                 this.scene.fog = new THREE.Fog(0x3a6020, 40, 250);
+                
+                // Add forest floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x3a4d2a,
+                    roughness: 0.95,
+                    metalness: 0.05
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add dense trees
+                const treeCount = 30;
+                for (let i = 0; i < treeCount; i++) {
+                    const angle = (i / treeCount) * Math.PI * 2;
+                    const distance = 60 + Math.random() * 100;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    // Tree trunk
+                    const trunkHeight = 12 + Math.random() * 8;
+                    const trunkGeometry = new THREE.CylinderGeometry(1.2, 1.8, trunkHeight, 6);
+                    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
+                    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                    trunk.position.set(x, -5 + trunkHeight / 2, z);
+                    this.scene.add(trunk);
+                    this.backgroundObjects.push(trunk);
+                    
+                    // Tree foliage - denser and darker
+                    const foliageGeometry = new THREE.SphereGeometry(6 + Math.random() * 3, 8, 8);
+                    const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0x1a3d0f });
+                    const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+                    foliage.position.set(x, -5 + trunkHeight + 3, z);
+                    this.scene.add(foliage);
+                    this.backgroundObjects.push(foliage);
+                }
+                
+                // Add mist particles
+                const particleCount = 150;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 250;
+                    positions[i * 3 + 1] = Math.random() * 50;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 250;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 4,
+                    color: 0x4d6040,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                
+                const mist = new THREE.Points(geometry, material);
+                this.scene.add(mist);
+                this.backgroundObjects.push(mist);
             }
             
             createDazzleBackground() {
                 // Warm pink/purple gradient
                 this.scene.background = new THREE.Color(0xE6B8E6);
                 this.scene.fog = new THREE.Fog(0xE6B8E6, 60, 300);
+                
+                // Add glossy floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xD8A8D8,
+                    roughness: 0.2,
+                    metalness: 0.7
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add floating disco balls/orbs
+                const orbCount = 15;
+                for (let i = 0; i < orbCount; i++) {
+                    const angle = (i / orbCount) * Math.PI * 2;
+                    const distance = 80 + Math.random() * 80;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    const y = 10 + Math.random() * 30;
+                    
+                    const orbGeometry = new THREE.SphereGeometry(3 + Math.random() * 2, 16, 16);
+                    const orbMaterial = new THREE.MeshStandardMaterial({
+                        color: Math.random() > 0.5 ? 0xFF00FF : 0xFF1493,
+                        emissive: Math.random() > 0.5 ? 0xAA00AA : 0xAA0044,
+                        emissiveIntensity: 0.6,
+                        roughness: 0.1,
+                        metalness: 0.9
+                    });
+                    const orb = new THREE.Mesh(orbGeometry, orbMaterial);
+                    orb.position.set(x, y, z);
+                    this.scene.add(orb);
+                    this.backgroundObjects.push(orb);
+                }
+                
+                // Add sparkle/glitter particles
+                const particleCount = 400;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 350;
+                    positions[i * 3 + 1] = Math.random() * 120;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 350;
+                    
+                    // Pink, purple, magenta sparkles
+                    const colorType = Math.random();
+                    if (colorType < 0.33) {
+                        colors[i * 3] = 1.0;
+                        colors[i * 3 + 1] = 0.1;
+                        colors[i * 3 + 2] = 0.9;
+                    } else if (colorType < 0.66) {
+                        colors[i * 3] = 0.9;
+                        colors[i * 3 + 1] = 0.1;
+                        colors[i * 3 + 2] = 0.6;
+                    } else {
+                        colors[i * 3] = 1.0;
+                        colors[i * 3 + 1] = 0.7;
+                        colors[i * 3 + 2] = 0.9;
+                    }
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
             }
             
             createCaveBackground() {
                 // Dark cave atmosphere
                 this.scene.background = new THREE.Color(0x1a1a1a);
                 this.scene.fog = new THREE.Fog(0x0a0a0a, 20, 150);
+                
+                // Add cave floor (rough rock)
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x3a3a3a,
+                    roughness: 1,
+                    metalness: 0
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add stalagmites
+                const stalagmiteCount = 20;
+                for (let i = 0; i < stalagmiteCount; i++) {
+                    const angle = (i / stalagmiteCount) * Math.PI * 2;
+                    const distance = 60 + Math.random() * 70;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    const height = 8 + Math.random() * 12;
+                    const rockGeometry = new THREE.ConeGeometry(2 + Math.random(), height, 6);
+                    const rockMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x4a4a4a,
+                        roughness: 0.95
+                    });
+                    const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+                    rock.position.set(x, -5 + height / 2, z);
+                    this.scene.add(rock);
+                    this.backgroundObjects.push(rock);
+                }
+                
+                // Add glowing crystal formations
+                const crystalCount = 12;
+                for (let i = 0; i < crystalCount; i++) {
+                    const angle = (i / crystalCount) * Math.PI * 2;
+                    const distance = 70 + Math.random() * 50;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    const crystalGeometry = new THREE.OctahedronGeometry(2 + Math.random() * 2);
+                    const crystalMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x4488ff,
+                        emissive: 0x2244aa,
+                        emissiveIntensity: 0.5,
+                        roughness: 0.1,
+                        metalness: 0.8
+                    });
+                    const crystal = new THREE.Mesh(crystalGeometry, crystalMaterial);
+                    crystal.position.set(x, -5 + Math.random() * 3, z);
+                    crystal.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                    this.scene.add(crystal);
+                    this.backgroundObjects.push(crystal);
+                }
+                
+                // Add mysterious glowing particles
+                const particleCount = 150;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 1] = Math.random() * 60;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+                    
+                    // Blue/purple glow
+                    colors[i * 3] = 0.3 + Math.random() * 0.4;
+                    colors[i * 3 + 1] = 0.3 + Math.random() * 0.3;
+                    colors[i * 3 + 2] = 0.8 + Math.random() * 0.2;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
             }
             
             createChristmasBackground() {
                 // Snowy white/blue
                 this.scene.background = new THREE.Color(0xE8F4F8);
                 this.scene.fog = new THREE.Fog(0xE8F4F8, 70, 350);
+                
+                // Add snowy ground
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xFFFFFF,
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add snow-covered pine trees
+                const treeCount = 18;
+                for (let i = 0; i < treeCount; i++) {
+                    const angle = (i / treeCount) * Math.PI * 2;
+                    const distance = 90 + Math.random() * 110;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    // Tree trunk
+                    const trunkGeometry = new THREE.CylinderGeometry(1, 1.5, 10, 6);
+                    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
+                    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                    trunk.position.set(x, 0, z);
+                    this.scene.add(trunk);
+                    this.backgroundObjects.push(trunk);
+                    
+                    // Pine tree layers with snow
+                    for (let layer = 0; layer < 4; layer++) {
+                        const layerGeometry = new THREE.ConeGeometry(6 - layer * 1.2, 5, 8);
+                        const layerMaterial = new THREE.MeshStandardMaterial({ color: 0x1a4d2f });
+                        const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
+                        layerMesh.position.set(x, 8 + layer * 3, z);
+                        this.scene.add(layerMesh);
+                        this.backgroundObjects.push(layerMesh);
+                        
+                        // Snow on top
+                        const snowGeometry = new THREE.ConeGeometry(6.2 - layer * 1.2, 0.5, 8);
+                        const snowMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+                        const snow = new THREE.Mesh(snowGeometry, snowMaterial);
+                        snow.position.set(x, 10.5 + layer * 3, z);
+                        this.scene.add(snow);
+                        this.backgroundObjects.push(snow);
+                    }
+                }
+                
+                // Add falling snow particles
+                const particleCount = 300;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 350;
+                    positions[i * 3 + 1] = Math.random() * 150;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 350;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    color: 0xFFFFFF,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const snowflakes = new THREE.Points(geometry, material);
+                this.scene.add(snowflakes);
+                this.backgroundObjects.push(snowflakes);
             }
             
             createDesertBackground() {
                 // Sandy desert yellow/orange
                 this.scene.background = new THREE.Color(0xF4C542);
                 this.scene.fog = new THREE.Fog(0xF4C542, 80, 400);
+                
+                // Add sand floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xE4B850,
+                    roughness: 0.95,
+                    metalness: 0
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add cacti
+                const cactiCount = 12;
+                for (let i = 0; i < cactiCount; i++) {
+                    const angle = (i / cactiCount) * Math.PI * 2;
+                    const distance = 100 + Math.random() * 120;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    const height = 8 + Math.random() * 6;
+                    const cactusGeometry = new THREE.CylinderGeometry(1, 1.2, height, 8);
+                    const cactusMaterial = new THREE.MeshStandardMaterial({ color: 0x3a5f2f });
+                    const cactus = new THREE.Mesh(cactusGeometry, cactusMaterial);
+                    cactus.position.set(x, -5 + height / 2, z);
+                    this.scene.add(cactus);
+                    this.backgroundObjects.push(cactus);
+                    
+                    // Add arms to some cacti
+                    if (Math.random() > 0.5) {
+                        const armGeometry = new THREE.CylinderGeometry(0.6, 0.7, 3, 6);
+                        const arm = new THREE.Mesh(armGeometry, cactusMaterial);
+                        arm.position.set(x + 1.5, -5 + height * 0.6, z);
+                        arm.rotation.z = Math.PI / 2;
+                        this.scene.add(arm);
+                        this.backgroundObjects.push(arm);
+                    }
+                }
+                
+                // Add heat shimmer particles
+                const particleCount = 100;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 300;
+                    positions[i * 3 + 1] = Math.random() * 30;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 300;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 3,
+                    color: 0xFFF4D0,
+                    transparent: true,
+                    opacity: 0.25
+                });
+                
+                const shimmer = new THREE.Points(geometry, material);
+                this.scene.add(shimmer);
+                this.backgroundObjects.push(shimmer);
             }
             
             createTropicalBackground() {
                 // Tropical turquoise
                 this.scene.background = new THREE.Color(0x40E0D0);
                 this.scene.fog = new THREE.Fog(0x40E0D0, 60, 320);
+                
+                // Add sandy beach floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xF4E4C1,
+                    roughness: 0.9,
+                    metalness: 0.05
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add palm trees
+                const palmCount = 15;
+                for (let i = 0; i < palmCount; i++) {
+                    const angle = (i / palmCount) * Math.PI * 2;
+                    const distance = 80 + Math.random() * 100;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    // Palm trunk
+                    const trunkHeight = 15 + Math.random() * 8;
+                    const trunkGeometry = new THREE.CylinderGeometry(0.8, 1, trunkHeight, 6);
+                    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B6F47 });
+                    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                    trunk.position.set(x, -5 + trunkHeight / 2, z);
+                    this.scene.add(trunk);
+                    this.backgroundObjects.push(trunk);
+                    
+                    // Palm leaves
+                    for (let j = 0; j < 6; j++) {
+                        const leafAngle = (j / 6) * Math.PI * 2;
+                        const leafGeometry = new THREE.ConeGeometry(0.5, 6, 4);
+                        const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+                        const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
+                        leaf.position.set(
+                            x + Math.cos(leafAngle) * 2,
+                            -5 + trunkHeight + 1,
+                            z + Math.sin(leafAngle) * 2
+                        );
+                        leaf.rotation.z = Math.PI / 3;
+                        leaf.rotation.y = leafAngle;
+                        this.scene.add(leaf);
+                        this.backgroundObjects.push(leaf);
+                    }
+                }
+                
+                // Add tropical atmosphere particles
+                const particleCount = 120;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 300;
+                    positions[i * 3 + 1] = Math.random() * 80;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 300;
+                    
+                    // Turquoise particles
+                    colors[i * 3] = 0.25;
+                    colors[i * 3 + 1] = 0.88;
+                    colors[i * 3 + 2] = 0.82;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
             }
             
             createFlowerBackground() {
                 // Soft pastel pink
                 this.scene.background = new THREE.Color(0xFFB6C1);
                 this.scene.fog = new THREE.Fog(0xFFB6C1, 50, 280);
+                
+                // Add grass floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x7EC850,
+                    roughness: 0.95,
+                    metalness: 0
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add flower clusters
+                const clusterCount = 25;
+                for (let i = 0; i < clusterCount; i++) {
+                    const angle = (i / clusterCount) * Math.PI * 2;
+                    const distance = 70 + Math.random() * 100;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    // Flower stem
+                    const stemGeometry = new THREE.CylinderGeometry(0.2, 0.2, 5, 6);
+                    const stemMaterial = new THREE.MeshStandardMaterial({ color: 0x4d8c3d });
+                    const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+                    stem.position.set(x, -2.5, z);
+                    this.scene.add(stem);
+                    this.backgroundObjects.push(stem);
+                    
+                    // Flower head (multiple petals)
+                    const flowerColors = [0xFF69B4, 0xFF1493, 0xFFB6C1, 0xFF6EB4, 0xFFA07A];
+                    const flowerColor = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+                    
+                    for (let p = 0; p < 6; p++) {
+                        const petalAngle = (p / 6) * Math.PI * 2;
+                        const petalGeometry = new THREE.SphereGeometry(1.2, 8, 8);
+                        const petalMaterial = new THREE.MeshStandardMaterial({ color: flowerColor });
+                        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+                        petal.scale.set(0.6, 1, 0.3);
+                        petal.position.set(
+                            x + Math.cos(petalAngle) * 1.5,
+                            0.5,
+                            z + Math.sin(petalAngle) * 1.5
+                        );
+                        petal.rotation.z = petalAngle;
+                        this.scene.add(petal);
+                        this.backgroundObjects.push(petal);
+                    }
+                    
+                    // Flower center
+                    const centerGeometry = new THREE.SphereGeometry(0.8, 8, 8);
+                    const centerMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700 });
+                    const center = new THREE.Mesh(centerGeometry, centerMaterial);
+                    center.position.set(x, 0.5, z);
+                    this.scene.add(center);
+                    this.backgroundObjects.push(center);
+                }
+                
+                // Add floating petals/sparkles
+                const particleCount = 200;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 300;
+                    positions[i * 3 + 1] = Math.random() * 80;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 300;
+                    
+                    // Pink/white petals
+                    colors[i * 3] = 1.0;
+                    colors[i * 3 + 1] = 0.7 + Math.random() * 0.3;
+                    colors[i * 3 + 2] = 0.8 + Math.random() * 0.2;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
             }
             
             createRecordStoreBackground() {
@@ -1765,6 +2362,63 @@
                 // Bright, clean white gallery
                 this.scene.background = new THREE.Color(0xF5F5F5);
                 this.scene.fog = new THREE.Fog(0xF5F5F5, 100, 400);
+                
+                // Add polished floor
+                const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xFFFFFF,
+                    roughness: 0.1,
+                    metalness: 0.3
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -5;
+                this.scene.add(floor);
+                this.backgroundObjects.push(floor);
+                
+                // Add minimalist columns
+                const columnCount = 8;
+                for (let i = 0; i < columnCount; i++) {
+                    const angle = (i / columnCount) * Math.PI * 2;
+                    const distance = 120;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    
+                    const columnGeometry = new THREE.CylinderGeometry(3, 3, 40, 16);
+                    const columnMaterial = new THREE.MeshStandardMaterial({
+                        color: 0xFFFFFF,
+                        roughness: 0.2,
+                        metalness: 0.1
+                    });
+                    const column = new THREE.Mesh(columnGeometry, columnMaterial);
+                    column.position.set(x, 15, z);
+                    this.scene.add(column);
+                    this.backgroundObjects.push(column);
+                }
+                
+                // Add subtle light particles
+                const particleCount = 100;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 250;
+                    positions[i * 3 + 1] = Math.random() * 80;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 250;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    color: 0xF0F0F0,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                this.scene.add(particles);
+                this.backgroundObjects.push(particles);
             }
             
             createModernGalleryDarkBackground() {
@@ -2459,7 +3113,7 @@
                 const row = Math.floor(slotIndex / cols);
                 
                 const x = (col - 1) * spacingX; // Center: -6, 0, 6
-                const y = row * spacingY + 1.4; // On shelf (0.15 above shelf surface) + half object height (1.25)
+                const y = row * spacingY + 1.9; // On shelf (0.15 above shelf surface) + half object height (1.75)
                 const z = 0.5; // In front of back panel
                 
                 return new THREE.Vector3(x, y, z);
@@ -2479,7 +3133,7 @@
                 const spacingX = usableWidth / (objectsPerTier - 1);
                 
                 const x = -usableWidth / 2 + (posInTier * spacingX);
-                const y = (2 - tier) * tierHeight + 1.25; // On top of platform (0.3) + half object height (1.25)
+                const y = (2 - tier) * tierHeight + 1.9; // On top of platform (0.15 above platform center) + half object height (1.75)
                 const z = tierDepth * (2 - tier); // Reverse: front (tier 2) at z=0, back (tier 0) at z=8
                 
                 return {
@@ -2516,7 +3170,7 @@
                 const row = Math.floor(slotIndex / cols);
                 
                 const x = -width / 2 + spacingX * (col + 1);
-                const y = platformHeight + 1.25; // On top of platform + half object height
+                const y = platformHeight + 1.75; // On top of platform + half object height (1.75)
                 const z = -depth / 2 + spacingZ * (row + 1);
                 
                 return new THREE.Vector3(x, y, z);
@@ -2537,7 +3191,7 @@
                 const angle = seat * angleStep - Math.PI / 2;
                 
                 const x = tierRadius * Math.cos(angle);
-                const y = tier * tierHeight + 1.25; // On tier surface + half object height
+                const y = (tier + 1) * tierHeight + 1.75; // On tier surface (top of cylinder) + half object height (1.75)
                 const z = tierRadius * Math.sin(angle);
                 
                 // Calculate rotation to face outward toward front (lowest tier)
