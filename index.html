@@ -2849,9 +2849,10 @@
                     // Switch to 3D view
                     trackListView.style.display = 'none';
                     canvasContainer.style.display = 'block';
-                    infoPanel.style.display = 'block';
-                    playlist.style.display = 'block';
-                    controls.style.display = 'flex';
+                    // Remove inline styles to let CSS media queries control visibility
+                    infoPanel.style.removeProperty('display');
+                    playlist.style.removeProperty('display');
+                    controls.style.removeProperty('display');
                 } else {
                     // Switch to 2D track list view
                     this.populateTrackList();
