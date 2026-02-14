@@ -1046,11 +1046,11 @@
             <img src="FirstTapsMV3D_logo1.jpg" alt="FirstTaps MV3D">
         </div>
 
-        <!-- Standalone Info Button (for landscape mode) -->
-        <button id="info-button-landscape" onclick="window.furnitureViewer.toggleInfoPanel()" style="display: none;">ℹ️ Info</button>
+        <!-- Old info button removed - using simplified mobile panel instead -->
+        <!-- <button id="info-button-landscape" onclick="window.furnitureViewer.toggleInfoPanel()" style="display: none;">ℹ️ Info</button> -->
 
-        <!-- Modal backdrop -->
-        <div id="modal-backdrop" onclick="window.furnitureViewer.closeInfoPanel()"></div>
+        <!-- Old modal backdrop removed - not needed with simplified panel -->
+        <!-- <div id="modal-backdrop" onclick="window.furnitureViewer.closeInfoPanel()"></div> -->
 
         <div id="loading">
             <div class="spinner"></div>
@@ -1063,8 +1063,9 @@
         </div>
 
         <div id="info-panel" style="display: none;">
-            <button class="modal-close-btn" onclick="window.furnitureViewer.closeInfoPanel()" style="display: none;">×</button>
-            <button id="info-toggle-btn" onclick="window.furnitureViewer.toggleInfoPanel()">ℹ️</button>
+            <!-- Old toggle buttons removed -->
+            <!-- <button class="modal-close-btn" onclick="window.furnitureViewer.closeInfoPanel()" style="display: none;">×</button> -->
+            <!-- <button id="info-toggle-btn" onclick="window.furnitureViewer.toggleInfoPanel()">ℹ️</button> -->
             <div class="info-content">
                 <h1 id="furniture-name">Loading...</h1>
                 <div class="subtitle" id="furniture-type"></div>
@@ -2243,8 +2244,8 @@
             }
             
             createGalleryWall(group, material) {
-                // Vertical wall
-                const geometry = new THREE.BoxGeometry(12, 6, 0.5);
+                // Larger vertical wall to accommodate bigger, more spaced objects
+                const geometry = new THREE.BoxGeometry(16, 8, 0.5); // Increased from 12x6
                 const mesh = new THREE.Mesh(geometry, material);
                 group.add(mesh);
             }
@@ -2479,15 +2480,15 @@
             }
             
             calculateGalleryWallSlot(slotIndex) {
-                // 2 rows x 5 columns (10 objects)
+                // 2 rows x 5 columns (10 objects) - increased spacing for larger objects
                 const cols = 5;
-                const spacing = 2.5;
+                const spacing = 3.5; // Increased from 2.5 to accommodate 2.8 wide objects
                 
                 const col = slotIndex % cols;
                 const row = Math.floor(slotIndex / cols);
                 
-                const x = (col - 2) * spacing; // Center: -5, -2.5, 0, 2.5, 5
-                const y = (row - 0.5) * spacing; // -1.25, 1.25
+                const x = (col - 2) * spacing; // Center: -7, -3.5, 0, 3.5, 7
+                const y = (row - 0.5) * spacing; // -1.75, 1.75
                 const z = 0.3;
                 
                 return new THREE.Vector3(x, y, z);
@@ -2925,40 +2926,14 @@
             }
 
             toggleInfoPanel() {
-                const infoPanel = document.getElementById('info-panel');
-                const backdrop = document.getElementById('modal-backdrop');
-                const isLandscape = window.matchMedia('(max-width: 768px) and (orientation: landscape)').matches;
-                
-                if (isLandscape) {
-                    // In landscape mode, use modal approach
-                    const isOpen = infoPanel.classList.contains('modal-open');
-                    
-                    if (isOpen) {
-                        this.closeInfoPanel();
-                    } else {
-                        infoPanel.classList.add('modal-open');
-                        backdrop.classList.add('visible');
-                    }
-                } else {
-                    // In portrait mode, use expand/collapse approach
-                    const isExpanded = infoPanel.classList.contains('expanded');
-                    
-                    if (isExpanded) {
-                        infoPanel.classList.remove('expanded');
-                        infoPanel.classList.add('collapsed');
-                    } else {
-                        infoPanel.classList.remove('collapsed');
-                        infoPanel.classList.add('expanded');
-                    }
-                }
+                // Deprecated - using simplified mobile panel with no toggle now
+                // Mobile devices show the static simplified panel
+                return;
             }
 
             closeInfoPanel() {
-                const infoPanel = document.getElementById('info-panel');
-                const backdrop = document.getElementById('modal-backdrop');
-                
-                infoPanel.classList.remove('modal-open');
-                backdrop.classList.remove('visible');
+                // Deprecated - no modal behavior needed
+                return;
             }
 
             getObjectIcon(objData) {
