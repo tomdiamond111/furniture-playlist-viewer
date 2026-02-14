@@ -62,6 +62,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             z-index: 50;
             transition: all 0.3s ease;
+            display: block; /* Visible by default for desktop */
         }
 
         #info-panel.collapsed {
@@ -663,6 +664,11 @@
             border: none;
         }
 
+        /* JavaScript-controlled visibility class */
+        .hidden-by-js {
+            display: none !important;
+        }
+
         #track-list-view {
             display: none;
             position: absolute;
@@ -1062,7 +1068,7 @@
             <p id="error-text"></p>
         </div>
 
-        <div id="info-panel" style="display: none;">
+        <div id="info-panel">
             <!-- Old toggle buttons removed -->
             <!-- <button class="modal-close-btn" onclick="window.furnitureViewer.closeInfoPanel()" style="display: none;">×</button> -->
             <!-- <button id="info-toggle-btn" onclick="window.furnitureViewer.toggleInfoPanel()">ℹ️</button> -->
@@ -1084,7 +1090,7 @@
         </div>
 
         <!-- Simplified Mobile Info Panel -->
-        <div id="mobile-info-panel" style="display: none;">
+        <div id="mobile-info-panel">
             <h3 id="mobile-furniture-info">Loading...</h3>
             <div id="mobile-import-container"></div>
             <div class="mobile-download-section">
@@ -1192,11 +1198,11 @@
                     
                     // Play cinematic intro animation
                     this.playCinematicIntro(() => {
-                        // Hide loading, show UI after intro
+                        // Hide loading after intro - CSS controls which panels show
                         document.getElementById('loading').style.display = 'none';
-                        document.getElementById('info-panel').style.display = 'block';
                         document.getElementById('playlist').style.display = 'block';
                         document.getElementById('controls').style.display = 'flex';
+                        // Let CSS media queries decide which info panel to show
                     });
                     
                 } catch (error) {
@@ -1356,14 +1362,15 @@
                         // Determine if mobile based on screen width
                         const isMobile = window.innerWidth <= 768;
                         
-                        // Show/hide appropriate info panel
+                        // Show/hide appropriate info panel based on screen width
+                        // Use classes instead of inline styles to respect CSS !important
                         if (infoPanel && mobileInfoPanel) {
                             if (isMobile) {
-                                infoPanel.style.display = 'none';
-                                mobileInfoPanel.style.display = 'block';
+                                infoPanel.classList.add('hidden-by-js');
+                                mobileInfoPanel.classList.remove('hidden-by-js');
                             } else {
-                                infoPanel.style.display = 'block';
-                                mobileInfoPanel.style.display = 'none';
+                                infoPanel.classList.remove('hidden-by-js');
+                                mobileInfoPanel.classList.add('hidden-by-js');
                             }
                         }
                         
@@ -2612,15 +2619,8 @@
                 `;
                 infoContent.appendChild(downloadSection);
                 
-                // Show appropriate info panel based on screen size
-                const isMobile = window.innerWidth <= 768;
-                if (isMobile) {
-                    // Mobile: hide full panel, show mobile panel
-                    document.getElementById('info-panel').style.display = 'none';
-                } else {
-                    // Desktop: show full panel
-                    document.getElementById('info-panel').style.display = 'block';
-                }
+                // Don't set inline styles - let CSS media queries handle visibility
+                // CSS will show/hide the appropriate panel based on screen size
                 
                 // Setup mobile info panel
                 document.getElementById('mobile-furniture-info').textContent = `${shareData.furniture.name}: ${shareData.objects.length} items`;
@@ -2638,12 +2638,8 @@
                     mobileImportContainer.appendChild(mobileImportBtn);
                 }
                 
-                // Show mobile panel only on mobile
-                if (isMobile) {
-                    document.getElementById('mobile-info-panel').style.display = 'block';
-                } else {
-                    document.getElementById('mobile-info-panel').style.display = 'none';
-                }
+                // Don't set inline styles - CSS media queries control visibility
+                // Both panels are populated, CSS decides which one to show
                 
                 // Playlist
                 const playlistContainer = document.getElementById('playlist-items');
