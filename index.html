@@ -883,7 +883,8 @@
         }
         
         /* Landscape mode - playlist on right side */
-        @media (max-width: 768px) and (orientation: landscape) {
+        /* Use max-height instead of max-width for landscape since mobile landscape can have width > 768px */
+        @media (max-height: 500px) and (orientation: landscape) {
             /* Hide desktop info panel and show mobile version */
             #info-panel {
                 display: none !important;
@@ -1007,7 +1008,8 @@
         }
         
         /* Desktop and Tablet - hide mobile elements */
-        @media (min-width: 769px) {
+        /* Also hide on landscape if height is tall (tablet landscape, not phone landscape) */
+        @media (min-width: 769px), (min-height: 501px) {
             #mobile-info-panel {
                 display: none !important;
             }
@@ -1359,19 +1361,13 @@
                         const infoPanel = document.getElementById('info-panel');
                         const mobileInfoPanel = document.getElementById('mobile-info-panel');
                         
-                        // Determine if mobile based on screen width
-                        const isMobile = window.innerWidth <= 768;
-                        
-                        // Show/hide appropriate info panel based on screen width
-                        // Use classes instead of inline styles to respect CSS !important
-                        if (infoPanel && mobileInfoPanel) {
-                            if (isMobile) {
-                                infoPanel.classList.add('hidden-by-js');
-                                mobileInfoPanel.classList.remove('hidden-by-js');
-                            } else {
-                                infoPanel.classList.remove('hidden-by-js');
-                                mobileInfoPanel.classList.add('hidden-by-js');
-                            }
+                        // Let CSS media queries handle panel visibility completely
+                        // Don't use JavaScript to toggle panels - CSS with orientation detection works better
+                        if (infoPanel) {
+                            infoPanel.classList.remove('hidden-by-js');
+                        }
+                        if (mobileInfoPanel) {
+                            mobileInfoPanel.classList.remove('hidden-by-js');
                         }
                         
                         // Remove any conflicting inline styles to let CSS take over
@@ -2203,6 +2199,12 @@
                 // Rotate riser 180 degrees so lowest tier faces camera
                 if (type === 'riser') {
                     group.rotation.y = Math.PI;
+                    group.userData.frontFacingRotation = Math.PI; // Keep riser facing forward after animation
+                }
+                
+                // Set front-facing rotation for other furniture types too
+                if (!group.userData.frontFacingRotation) {
+                    group.userData.frontFacingRotation = 0;
                 }
                 
                 this.scene.add(group);
