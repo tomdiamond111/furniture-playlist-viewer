@@ -1887,7 +1887,7 @@
                     skipped = true;
                     this.cameraDistance = endDistance;
                     if (this.furniture) {
-                        this.furniture.rotation.y = 0;
+                        const finalRotation = this.furniture.userData.frontFacingRotation || 0; this.furniture.rotation.y = finalRotation;
                     }
                     callback();
                 };
@@ -1927,7 +1927,7 @@
                     } else {
                         // Intro complete - reset to front-facing view
                         if (this.furniture) {
-                            this.furniture.rotation.y = 0;
+                            const finalRotation = this.furniture.userData.frontFacingRotation || 0; this.furniture.rotation.y = finalRotation;
                         }
                         this.renderer.domElement.removeEventListener('pointerdown', onTap);
                         callback();
