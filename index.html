@@ -1263,6 +1263,11 @@
                     let rawData = (await response.text()).trim();
                     console.log('📦 Raw data (first 100 chars):', rawData.substring(0, 100));
                     
+                    // Check if we got HTML instead of data (service error)
+                    if (rawData.startsWith('<!DOCTYPE') || rawData.startsWith('<html')) {
+                        throw new Error(`Paste service returned HTML error page. The paste may not exist, may have expired, or the service may be having issues. Try generating a new share link.`);
+                    }
+                    
                     // Clean whitespace
                     const originalLength = rawData.length;
                     furnitureData = rawData.replace(/\s+/g, '');
