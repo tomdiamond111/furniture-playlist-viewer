@@ -1231,6 +1231,9 @@
                 } else if (urlParams.has('pasters')) {
                     pasteId = urlParams.get('pasters');
                     pasteService = 'pasters';
+                } else if (urlParams.has('termbin')) {
+                    pasteId = urlParams.get('termbin');
+                    pasteService = 'termbin';
                 } else if (urlParams.has('ox0st')) {
                     pasteId = urlParams.get('ox0st');
                     pasteService = 'ox0st';
@@ -1245,6 +1248,9 @@
                     } else if (hashParams.has('pasters')) {
                         pasteId = hashParams.get('pasters');
                         pasteService = 'pasters';
+                    } else if (hashParams.has('termbin')) {
+                        pasteId = hashParams.get('termbin');
+                        pasteService = 'termbin';
                     } else if (hashParams.has('ox0st')) {
                         pasteId = hashParams.get('ox0st');
                         pasteService = 'ox0st';
@@ -1264,6 +1270,10 @@
                         console.log('📥 Loading from paste.rs:', this.pasteId);
                         response = await fetch(`https://paste.rs/${this.pasteId}`);
                         if (!response.ok) throw new Error('Failed to fetch from paste.rs');
+                    } else if (pasteService === 'termbin') {
+                        console.log('📥 Loading from termbin.com:', this.pasteId);
+                        response = await fetch(`https://termbin.com/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from termbin.com');
                     } else if (pasteService === 'ox0st') {
                         console.log('📥 Loading from 0x0.st:', this.pasteId);
                         response = await fetch(`https://0x0.st/${this.pasteId}`);
