@@ -1223,16 +1223,20 @@
                 let furnitureData;
                 let pasteId = null;
                 
-                // Check for dpaste ID in query params first
+                // Check for paste ID in query params (support both 'paste' and 'rentry' parameters)
                 if (urlParams.has('paste')) {
                     pasteId = urlParams.get('paste');
+                } else if (urlParams.has('rentry')) {
+                    pasteId = urlParams.get('rentry');
                 }
-                // Also check hash parameters (in case URL uses #paste= instead of ?paste=)
+                // Also check hash parameters (in case URL uses #paste= or #rentry= instead of ?paste= or ?rentry=)
                 else if (window.location.hash) {
                     const hash = window.location.hash.substring(1); // Remove #
                     const hashParams = new URLSearchParams(hash);
                     if (hashParams.has('paste')) {
                         pasteId = hashParams.get('paste');
+                    } else if (hashParams.has('rentry')) {
+                        pasteId = hashParams.get('rentry');
                     }
                 }
                 
