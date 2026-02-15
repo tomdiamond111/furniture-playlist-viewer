@@ -3059,11 +3059,33 @@
                 
                 // Load thumbnail texture if available
                 let thumbnailTexture = null;
-                if (objData.thumbnailDataUrl) {
+                let thumbnailSource = null;
+                
+                // Prefer thumbnailUrl (YouTube/Vimeo) with CORS proxy, fallback to thumbnailDataUrl
+                if (objData.thumbnailUrl) {
+                    // Proxy external URLs to avoid CORS issues
+                    if (objData.thumbnailUrl.includes('ytimg.com') || objData.thumbnailUrl.includes('vimeocdn.com')) {
+                        thumbnailSource = `https://api.allorigins.win/raw?url=${encodeURIComponent(objData.thumbnailUrl)}`;
+                    } else {
+                        thumbnailSource = objData.thumbnailUrl;
+                    }
+                } else if (objData.thumbnailDataUrl) {
+                    thumbnailSource = objData.thumbnailDataUrl;
+                }
+                
+                if (thumbnailSource) {
                     try {
-                        thumbnailTexture = await this.loadTexture(objData.thumbnailDataUrl);
+                        thumbnailTexture = await this.loadTexture(thumbnailSource);
                     } catch (error) {
                         console.warn('Failed to load thumbnail:', error);
+                        // Try fallback to thumbnailDataUrl if thumbnailUrl failed
+                        if (objData.thumbnailUrl && objData.thumbnailDataUrl) {
+                            try {
+                                thumbnailTexture = await this.loadTexture(objData.thumbnailDataUrl);
+                            } catch (e) {
+                                console.warn('Fallback thumbnail also failed:', e);
+                            }
+                        }
                     }
                 }
                 
@@ -3368,10 +3390,27 @@
                     }
                     
                     // Thumbnail
-                    if (objData.thumbnailDataUrl && !objData.isLocalMedia) {
+                    if ((objData.thumbnailUrl || objData.thumbnailDataUrl) && !objData.isLocalMedia) {
                         const thumb = document.createElement('img');
                         thumb.className = 'playlist-item-thumbnail';
-                        thumb.src = objData.thumbnailDataUrl;
+                        
+                        // Prefer thumbnailUrl (YouTube/Vimeo) with CORS proxy
+                        if (objData.thumbnailUrl) {
+                            if (objData.thumbnailUrl.includes('ytimg.com') || objData.thumbnailUrl.includes('vimeocdn.com')) {
+                                thumb.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(objData.thumbnailUrl)}`;
+                            } else {
+                                thumb.src = objData.thumbnailUrl;
+                            }
+                            // Fallback to thumbnailDataUrl if URL fails
+                            thumb.onerror = () => {
+                                if (objData.thumbnailDataUrl) {
+                                    thumb.src = objData.thumbnailDataUrl;
+                                }
+                            };
+                        } else {
+                            thumb.src = objData.thumbnailDataUrl;
+                        }
+                        
                         item.appendChild(thumb);
                     } else {
                         const placeholder = document.createElement('div');
@@ -3596,10 +3635,27 @@
                     item.className = 'track-item';
                     
                     // Thumbnail or icon
-                    if (objData.thumbnailDataUrl && !objData.isLocalMedia) {
+                    if ((objData.thumbnailUrl || objData.thumbnailDataUrl) && !objData.isLocalMedia) {
                         const thumb = document.createElement('img');
                         thumb.className = 'track-item-thumbnail';
-                        thumb.src = objData.thumbnailDataUrl;
+                        
+                        // Prefer thumbnailUrl (YouTube/Vimeo) with CORS proxy
+                        if (objData.thumbnailUrl) {
+                            if (objData.thumbnailUrl.includes('ytimg.com') || objData.thumbnailUrl.includes('vimeocdn.com')) {
+                                thumb.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(objData.thumbnailUrl)}`;
+                            } else {
+                                thumb.src = objData.thumbnailUrl;
+                            }
+                            // Fallback to thumbnailDataUrl if URL fails
+                            thumb.onerror = () => {
+                                if (objData.thumbnailDataUrl) {
+                                    thumb.src = objData.thumbnailDataUrl;
+                                }
+                            };
+                        } else {
+                            thumb.src = objData.thumbnailDataUrl;
+                        }
+                        
                         item.appendChild(thumb);
                     } else {
                         const icon = document.createElement('div');
