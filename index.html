@@ -1269,12 +1269,12 @@
                     } else if (pasteService === 'pasters') {
                         console.log('📥 Loading from paste.rs:', this.pasteId);
                         // Use CORS proxy to bypass cross-origin restrictions
-                        response = await fetch(`https://corsproxy.io/?https://paste.rs/${this.pasteId}`);
+                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://paste.rs/' + this.pasteId)}`);
                         if (!response.ok) throw new Error('Failed to fetch from paste.rs');
                     } else if (pasteService === 'termbin') {
                         console.log('📥 Loading from termbin.com:', this.pasteId);
                         // Use CORS proxy to bypass cross-origin restrictions
-                        response = await fetch(`https://corsproxy.io/?https://termbin.com/${this.pasteId}`);
+                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://termbin.com/' + this.pasteId)}`);
                         if (!response.ok) throw new Error('Failed to fetch from termbin.com');
                     } else if (pasteService === 'ox0st') {
                         console.log('📥 Loading from 0x0.st:', this.pasteId);
