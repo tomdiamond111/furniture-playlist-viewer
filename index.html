@@ -1214,14 +1214,30 @@
 
             async extractShareData() {
                 console.log('📥 Starting data extraction...');
+                console.log('🔍 Current URL:', window.location.href);
+                console.log('🔍 Search params:', window.location.search);
+                console.log('🔍 Hash:', window.location.hash);
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 
                 let furnitureData;
+                let pasteId = null;
                 
-                // Check for dpaste ID
+                // Check for dpaste ID in query params first
                 if (urlParams.has('paste')) {
-                    this.pasteId = urlParams.get('paste'); // Store for import button
+                    pasteId = urlParams.get('paste');
+                }
+                // Also check hash parameters (in case URL uses #paste= instead of ?paste=)
+                else if (window.location.hash) {
+                    const hash = window.location.hash.substring(1); // Remove #
+                    const hashParams = new URLSearchParams(hash);
+                    if (hashParams.has('paste')) {
+                        pasteId = hashParams.get('paste');
+                    }
+                }
+                
+                if (pasteId) {
+                    this.pasteId = pasteId; // Store for import button
                     console.log('📥 Loading from dpaste.com:', this.pasteId);
                     
                     const response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
