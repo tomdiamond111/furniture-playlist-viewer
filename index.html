@@ -1183,7 +1183,7 @@
                     // Initialize Three.js scene first
                     this.initThreeJS();
                     
-                    // Extract data from URL (async for dpaste)
+                    // Extract data from URL
                     const shareData = await this.extractShareData();
                     
                     // Load furniture and objects
@@ -1224,24 +1224,30 @@
                 let pasteId = null;
                 let pasteService = null;
                 
-                // Check for paste ID in query params (support both 'paste' and 'rentry' parameters)
-                if (urlParams.has('paste')) {
-                    pasteId = urlParams.get('paste');
-                    pasteService = 'dpaste';
-                } else if (urlParams.has('rentry')) {
+                // Check for paste ID in query params
+                if (urlParams.has('rentry')) {
                     pasteId = urlParams.get('rentry');
                     pasteService = 'rentry';
+                } else if (urlParams.has('pasters')) {
+                    pasteId = urlParams.get('pasters');
+                    pasteService = 'pasters';
+                } else if (urlParams.has('ox0st')) {
+                    pasteId = urlParams.get('ox0st');
+                    pasteService = 'ox0st';
                 }
-                // Also check hash parameters (in case URL uses #paste= or #rentry= instead of ?paste= or ?rentry=)
+                // Also check hash parameters
                 else if (window.location.hash) {
                     const hash = window.location.hash.substring(1); // Remove #
                     const hashParams = new URLSearchParams(hash);
-                    if (hashParams.has('paste')) {
-                        pasteId = hashParams.get('paste');
-                        pasteService = 'dpaste';
-                    } else if (hashParams.has('rentry')) {
+                    if (hashParams.has('rentry')) {
                         pasteId = hashParams.get('rentry');
                         pasteService = 'rentry';
+                    } else if (hashParams.has('pasters')) {
+                        pasteId = hashParams.get('pasters');
+                        pasteService = 'pasters';
+                    } else if (hashParams.has('ox0st')) {
+                        pasteId = hashParams.get('ox0st');
+                        pasteService = 'ox0st';
                     }
                 }
                 
@@ -1250,14 +1256,18 @@
                     
                     // Fetch from appropriate service
                     let response;
-                    if (pasteService === 'dpaste') {
-                        console.log('📥 Loading from dpaste.com:', this.pasteId);
-                        response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
-                        if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
-                    } else if (pasteService === 'rentry') {
+                    if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
                         response = await fetch(`https://rentry.co/${this.pasteId}/raw`);
                         if (!response.ok) throw new Error('Failed to fetch from rentry.co');
+                    } else if (pasteService === 'pasters') {
+                        console.log('📥 Loading from paste.rs:', this.pasteId);
+                        response = await fetch(`https://paste.rs/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from paste.rs');
+                    } else if (pasteService === 'ox0st') {
+                        console.log('📥 Loading from 0x0.st:', this.pasteId);
+                        response = await fetch(`https://0x0.st/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from 0x0.st');
                     }
                     
                     let rawData = (await response.text()).trim();
