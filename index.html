@@ -1221,8 +1221,8 @@
                     { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, name: 'allorigins' },
                     // Backup CORS proxy
                     { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, name: 'corsproxy' },
-                    // Another backup
-                    { url: `https://cors-anywhere.herokuapp.com/${url}`, name: 'cors-anywhere' }
+                    // Another backup - thingproxy
+                    { url: `https://thingproxy.freeboard.io/fetch/${url}`, name: 'thingproxy' }
                 ];
 
                 let lastError = null;
@@ -1230,9 +1230,16 @@
                 for (const proxy of proxies) {
                     try {
                         console.log(`🔗 Trying ${proxy.name} for ${pasteServiceName}:`, proxy.url);
+                        
+                        // Create AbortController for timeout
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                        
                         const response = await fetch(proxy.url, {
-                            signal: AbortSignal.timeout(10000) // 10 second timeout
+                            signal: controller.signal
                         });
+                        
+                        clearTimeout(timeoutId);
                         
                         if (response.ok) {
                             console.log(`✅ Success with ${proxy.name}`);
@@ -1242,7 +1249,9 @@
                         console.log(`❌ ${proxy.name} returned status ${response.status}`);
                         lastError = new Error(`HTTP ${response.status}`);
                     } catch (error) {
-                        console.log(`❌ ${proxy.name} failed:`, error.message);
+                        // Handle timeout and network errors
+                        const errorMsg = error.name === 'AbortError' ? 'timeout' : error.message;
+                        console.log(`❌ ${proxy.name} failed: ${errorMsg}`);
                         lastError = error;
                     }
                 }
