@@ -1212,6 +1212,45 @@
                 }
             }
 
+            // Helper function to fetch with CORS proxy fallbacks
+            async fetchWithProxy(url, pasteServiceName) {
+                const proxies = [
+                    // Try direct fetch first (works for some services)
+                    { url: url, name: 'direct' },
+                    // Primary CORS proxy
+                    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, name: 'allorigins' },
+                    // Backup CORS proxy
+                    { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, name: 'corsproxy' },
+                    // Another backup
+                    { url: `https://cors-anywhere.herokuapp.com/${url}`, name: 'cors-anywhere' }
+                ];
+
+                let lastError = null;
+                
+                for (const proxy of proxies) {
+                    try {
+                        console.log(`🔗 Trying ${proxy.name} for ${pasteServiceName}:`, proxy.url);
+                        const response = await fetch(proxy.url, {
+                            signal: AbortSignal.timeout(10000) // 10 second timeout
+                        });
+                        
+                        if (response.ok) {
+                            console.log(`✅ Success with ${proxy.name}`);
+                            return response;
+                        }
+                        
+                        console.log(`❌ ${proxy.name} returned status ${response.status}`);
+                        lastError = new Error(`HTTP ${response.status}`);
+                    } catch (error) {
+                        console.log(`❌ ${proxy.name} failed:`, error.message);
+                        lastError = error;
+                    }
+                }
+                
+                // All proxies failed
+                throw new Error(`Failed to fetch from ${pasteServiceName}. Tried multiple methods. ${lastError?.message || 'Network error'}. Please check your internet connection or try a different share link.`);
+            }
+
             async extractShareData() {
                 console.log('📥 Starting data extraction...');
                 console.log('🔍 Current URL:', window.location.href);
@@ -1276,23 +1315,17 @@
                     let response;
                     if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
-                        response = await fetch(`https://rentry.co/${this.pasteId}/raw`);
-                        if (!response.ok) throw new Error('Failed to fetch from rentry.co');
+                        response = await this.fetchWithProxy(`https://rentry.co/${this.pasteId}/raw`, 'rentry.co');
                     } else if (pasteService === 'pasters') {
                         console.log('📥 Loading from paste.rs:', this.pasteId);
-                        // Use CORS proxy to bypass cross-origin restrictions
-                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://paste.rs/' + this.pasteId)}`);
-                        if (!response.ok) throw new Error('Failed to fetch from paste.rs');
+                        response = await this.fetchWithProxy(`https://paste.rs/${this.pasteId}`, 'paste.rs');
                     } else if (pasteService === 'termbin') {
                         console.log('📥 Loading from termbin.com:', this.pasteId);
-                        // Use CORS proxy to bypass cross-origin restrictions
-                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://termbin.com/' + this.pasteId)}`);
-                        if (!response.ok) throw new Error('Failed to fetch from termbin.com');
+                        response = await this.fetchWithProxy(`https://termbin.com/${this.pasteId}`, 'termbin.com');
                     } else if (pasteService === 'pastegg') {
                         console.log('📥 Loading from paste.gg:', this.pasteId);
                         // paste.gg has a proper API endpoint that returns JSON
-                        response = await fetch(`https://api.paste.gg/v1/pastes/${this.pasteId}`);
-                        if (!response.ok) throw new Error('Failed to fetch from paste.gg');
+                        response = await this.fetchWithProxy(`https://api.paste.gg/v1/pastes/${this.pasteId}`, 'paste.gg');
                         
                         // Parse paste.gg JSON response
                         const pasteData = await response.json();
@@ -1327,14 +1360,10 @@
                         }
                     } else if (pasteService === 'dpaste') {
                         console.log('📥 Loading from dpaste.com:', this.pasteId);
-                        // Use CORS proxy to bypass cross-origin restrictions
-                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://dpaste.com/' + this.pasteId + '.txt')}`);
-                        if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
+                        response = await this.fetchWithProxy(`https://dpaste.com/${this.pasteId}.txt`, 'dpaste.com');
                     } else if (pasteService === 'ox0st') {
                         console.log('📥 Loading from 0x0.st:', this.pasteId);
-                        // Use CORS proxy to bypass cross-origin restrictions
-                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://0x0.st/' + this.pasteId)}`);
-                        if (!response.ok) throw new Error('Failed to fetch from 0x0.st');
+                        response = await this.fetchWithProxy(`https://0x0.st/${this.pasteId}`, '0x0.st');
                     }
                     
                     let rawData = (await response.text()).trim();
