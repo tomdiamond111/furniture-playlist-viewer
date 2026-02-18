@@ -1327,11 +1327,13 @@
                         }
                     } else if (pasteService === 'dpaste') {
                         console.log('📥 Loading from dpaste.com:', this.pasteId);
-                        response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
+                        // Use CORS proxy to bypass cross-origin restrictions
+                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://dpaste.com/' + this.pasteId + '.txt')}`);
                         if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
                     } else if (pasteService === 'ox0st') {
                         console.log('📥 Loading from 0x0.st:', this.pasteId);
-                        response = await fetch(`https://0x0.st/${this.pasteId}`);
+                        // Use CORS proxy to bypass cross-origin restrictions
+                        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://0x0.st/' + this.pasteId)}`);
                         if (!response.ok) throw new Error('Failed to fetch from 0x0.st');
                     }
                     
