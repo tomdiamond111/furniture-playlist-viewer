@@ -1234,6 +1234,12 @@
                 } else if (urlParams.has('termbin')) {
                     pasteId = urlParams.get('termbin');
                     pasteService = 'termbin';
+                } else if (urlParams.has('pastegg')) {
+                    pasteId = urlParams.get('pastegg');
+                    pasteService = 'pastegg';
+                } else if (urlParams.has('dpaste')) {
+                    pasteId = urlParams.get('dpaste');
+                    pasteService = 'dpaste';
                 } else if (urlParams.has('ox0st')) {
                     pasteId = urlParams.get('ox0st');
                     pasteService = 'ox0st';
@@ -1251,6 +1257,12 @@
                     } else if (hashParams.has('termbin')) {
                         pasteId = hashParams.get('termbin');
                         pasteService = 'termbin';
+                    } else if (hashParams.has('pastegg')) {
+                        pasteId = hashParams.get('pastegg');
+                        pasteService = 'pastegg';
+                    } else if (hashParams.has('dpaste')) {
+                        pasteId = hashParams.get('dpaste');
+                        pasteService = 'dpaste';
                     } else if (hashParams.has('ox0st')) {
                         pasteId = hashParams.get('ox0st');
                         pasteService = 'ox0st';
@@ -1276,6 +1288,47 @@
                         // Use CORS proxy to bypass cross-origin restrictions
                         response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://termbin.com/' + this.pasteId)}`);
                         if (!response.ok) throw new Error('Failed to fetch from termbin.com');
+                    } else if (pasteService === 'pastegg') {
+                        console.log('📥 Loading from paste.gg:', this.pasteId);
+                        // paste.gg has a proper API endpoint that returns JSON
+                        response = await fetch(`https://api.paste.gg/v1/pastes/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from paste.gg');
+                        
+                        // Parse paste.gg JSON response
+                        const pasteData = await response.json();
+                        if (pasteData.status === 'success' && pasteData.result?.files?.[0]?.content?.value) {
+                            let rawData = pasteData.result.files[0].content.value;
+                            console.log('📦 Extracted data from paste.gg JSON');
+                            
+                            // Check if we got HTML instead of data (service error)
+                            if (rawData.startsWith('<!DOCTYPE') || rawData.startsWith('<html')) {
+                                throw new Error(`Paste service returned HTML error page. The paste may not exist, may have expired, or the service may be having issues. Try generating a new share link.`);
+                            }
+                            
+                            // Clean whitespace
+                            const originalLength = rawData.length;
+                            furnitureData = rawData.replace(/\s+/g, '');
+                            if (furnitureData.length !== originalLength) {
+                                console.log(`🧹 Cleaned data: ${originalLength} → ${furnitureData.length} chars`);
+                            }
+                            
+                            // Decompress with LZ-String
+                            console.log('🗜️ Decompressing with LZ-String...');
+                            const jsonString = LZString.decompressFromEncodedURIComponent(furnitureData);
+                            if (!jsonString) {
+                                throw new Error('Failed to decompress data. The share link may be corrupted.');
+                            }
+                            console.log('✅ Data decompressed successfully');
+                            const data = JSON.parse(jsonString);
+                            console.log('✅ Furniture data loaded:', data);
+                            return data;
+                        } else {
+                            throw new Error('Invalid paste.gg response structure');
+                        }
+                    } else if (pasteService === 'dpaste') {
+                        console.log('📥 Loading from dpaste.com:', this.pasteId);
+                        response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
+                        if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
                     } else if (pasteService === 'ox0st') {
                         console.log('📥 Loading from 0x0.st:', this.pasteId);
                         response = await fetch(`https://0x0.st/${this.pasteId}`);
