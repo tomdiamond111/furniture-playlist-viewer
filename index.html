@@ -1273,7 +1273,10 @@
                 let pasteService = null;
                 
                 // Check for paste ID in query params
-                if (urlParams.has('ixio')) {
+                if (urlParams.has('gist')) {
+                    pasteId = urlParams.get('gist');
+                    pasteService = 'gist';
+                } else if (urlParams.has('ixio')) {
                     pasteId = urlParams.get('ixio');
                     pasteService = 'ixio';
                 } else if (urlParams.has('paste')) {
@@ -1305,7 +1308,10 @@
                 else if (window.location.hash) {
                     const hash = window.location.hash.substring(1); // Remove #
                     const hashParams = new URLSearchParams(hash);
-                    if (hashParams.has('ixio')) {
+                    if (hashParams.has('gist')) {
+                        pasteId = hashParams.get('gist');
+                        pasteService = 'gist';
+                    } else if (hashParams.has('ixio')) {
                         pasteId = hashParams.get('ixio');
                         pasteService = 'ixio';
                     } else if (hashParams.has('paste')) {
@@ -1340,7 +1346,41 @@
                     
                     // Fetch from appropriate service
                     let response;
-                    if (pasteService === 'ixio') {
+                    if (pasteService === 'gist') {
+                        console.log('📥 Loading from GitHub Gist:', this.pasteId);
+                        // GitHub Gist API - direct fetch, no CORS issues
+                        response = await fetch(`https://api.github.com/gists/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from GitHub Gist');
+                        
+                        const gistData = await response.json();
+                        console.log('📦 Gist loaded:', gistData);
+                        
+                        // Get the first file from the gist
+                        const files = gistData.files;
+                        const firstFile = Object.values(files)[0];
+                        if (!firstFile) throw new Error('No files found in Gist');
+                        
+                        let rawData = firstFile.content.trim();
+                        console.log('📦 Raw data from Gist (first 100 chars):', rawData.substring(0, 100));
+                        
+                        // Clean whitespace
+                        const originalLength = rawData.length;
+                        furnitureData = rawData.replace(/\s+/g, '');
+                        if (furnitureData.length !== originalLength) {
+                            console.log(`🧹 Cleaned data: ${originalLength} → ${furnitureData.length} chars`);
+                        }
+                        
+                        // Decompress with LZ-String
+                        console.log('🗜️ Decompressing with LZ-String...');
+                        const jsonString = LZString.decompressFromEncodedURIComponent(furnitureData);
+                        if (!jsonString) {
+                            throw new Error('Failed to decompress data. The share link may be corrupted.');
+                        }
+                        console.log('✅ Data decompressed successfully');
+                        const data = JSON.parse(jsonString);
+                        console.log('✅ Furniture data loaded:', data);
+                        return data;
+                    } else if (pasteService === 'ixio') {
                         console.log('📥 Loading from ix.io:', this.pasteId);
                         // ix.io direct fetch
                         response = await fetch(`http://ix.io/${this.pasteId}`);
