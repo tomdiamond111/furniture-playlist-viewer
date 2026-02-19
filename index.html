@@ -1393,8 +1393,15 @@
                     console.log('📦 Raw data (first 100 chars):', rawData.substring(0, 100));
                     
                     // Check if we got HTML instead of data (service error)
-                    if (rawData.startsWith('<!DOCTYPE') || rawData.startsWith('<html')) {
-                        throw new Error(`Paste service returned HTML error page. The paste may not exist, may have expired, or the service may be having issues. Try generating a new share link.`);
+                    const dataLower = rawData.toLowerCase();
+                    if (dataLower.startsWith('<!doctype') || dataLower.startsWith('<html') || dataLower.includes('<head>') || dataLower.includes('<title>')) {
+                        console.error('❌ Received HTML error page instead of paste data');
+                        throw new Error(`The paste does not exist or has expired. Please generate a new share link from FirstTapsMV3D app. (Service: ${pasteService})`);
+                    }
+                    
+                    // Validate data looks like compressed LZ-String (should not be empty and should have valid characters)
+                    if (!rawData || rawData.length < 10) {
+                        throw new Error(`Paste data is too short or empty. Please generate a new share link.`);
                     }
                     
                     // Clean whitespace
