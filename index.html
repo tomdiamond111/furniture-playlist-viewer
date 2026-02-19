@@ -1273,7 +1273,10 @@
                 let pasteService = null;
                 
                 // Check for paste ID in query params
-                if (urlParams.has('rentry')) {
+                if (urlParams.has('paste')) {
+                    pasteId = urlParams.get('paste');
+                    pasteService = 'paste';
+                } else if (urlParams.has('rentry')) {
                     pasteId = urlParams.get('rentry');
                     pasteService = 'rentry';
                 } else if (urlParams.has('pastesio')) {
@@ -1299,7 +1302,10 @@
                 else if (window.location.hash) {
                     const hash = window.location.hash.substring(1); // Remove #
                     const hashParams = new URLSearchParams(hash);
-                    if (hashParams.has('rentry')) {
+                    if (hashParams.has('paste')) {
+                        pasteId = hashParams.get('paste');
+                        pasteService = 'paste';
+                    } else if (hashParams.has('rentry')) {
                         pasteId = hashParams.get('rentry');
                         pasteService = 'rentry';
                     } else if (hashParams.has('pastesio')) {
@@ -1328,7 +1334,12 @@
                     
                     // Fetch from appropriate service
                     let response;
-                    if (pasteService === 'rentry') {
+                    if (pasteService === 'paste') {
+                        console.log('📥 Loading from dpaste.com:', this.pasteId);
+                        // dpaste.com with .txt extension - direct fetch
+                        response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
+                        if (!response.ok) throw new Error('Failed to fetch from dpaste.com');
+                    } else if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
                         // rentry.co requires /raw endpoint to get plain text
                         response = await fetch(`https://rentry.co/${this.pasteId}/raw`, {
