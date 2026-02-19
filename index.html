@@ -1330,8 +1330,12 @@
                     let response;
                     if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
-                        // rentry.co supports CORS - direct fetch
-                        response = await fetch(`https://rentry.co/${this.pasteId}`);
+                        // rentry.co supports CORS - direct fetch with Accept header to get plain text
+                        response = await fetch(`https://rentry.co/${this.pasteId}`, {
+                            headers: {
+                                'Accept': 'text/plain, */*'
+                            }
+                        });
                         if (!response.ok) throw new Error('Failed to fetch from rentry.co');
                     } else if (pasteService === 'pastesio') {
                         console.log('📥 Loading from pastes.io:', this.pasteId);
