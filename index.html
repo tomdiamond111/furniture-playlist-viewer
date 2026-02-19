@@ -1150,6 +1150,143 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 
     <script>
+        /**
+         * Link Title Label Manager for Viewer
+         * Creates text sprites above objects matching app's style
+         */
+        class LinkTitleManager {
+            constructor(scene, THREE) {
+                this.scene = scene;
+                this.THREE = THREE;
+                this.labels = new Map(); // objectUUID -> labelSprite
+                console.log('📝 LinkTitleManager initialized for viewer');
+            }
+
+            /**
+             * Create label sprite for an object
+             * @param {THREE.Object3D} object - The object to label
+             * @param {string} title - The title text (already truncated to 14 chars)
+             */
+            createLabel(object, title) {
+                if (!title || title.trim() === '') return null;
+
+                try {
+                    // Create canvas for text
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const fontSize = 32;
+                    const padding = 8;
+                    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+                    const textMetrics = ctx.measureText(title);
+                    const textWidth = textMetrics.width;
+                    
+                    canvas.width = textWidth + padding * 2;
+                    canvas.height = fontSize + padding * 2;
+                    
+                    // Draw background (black with transparency)
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw text (white)
+                    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(title, padding, padding);
+                    
+                    // Create texture
+                    const texture = new this.THREE.CanvasTexture(canvas);
+                    texture.minFilter = this.THREE.LinearFilter;
+                    texture.magFilter = this.THREE.LinearFilter;
+                    
+                    // Create sprite
+                    const material = new this.THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: true,
+                        opacity: 0.9,
+                        depthTest: false, // Always visible on top
+                        depthWrite: false
+                    });
+                    
+                    const sprite = new this.THREE.Sprite(material);
+                    
+                    // Scale sprite (0.8 height in world units)
+                    const aspectRatio = canvas.width / canvas.height;
+                    const spriteHeight = 0.8;
+                    sprite.scale.set(spriteHeight * aspectRatio, spriteHeight, 1);
+                    
+                    // Position above object
+                    this.positionLabel(sprite, object);
+                    
+                    // Add to scene
+                    this.scene.add(sprite);
+                    
+                    // Store reference
+                    this.labels.set(object.uuid, sprite);
+                    sprite.userData.labelText = title;
+                    sprite.userData.linkObjectUUID = object.uuid;
+                    
+                    console.log(`📝 Created label "${title}" for object ${object.uuid}`);
+                    return sprite;
+                    
+                } catch (error) {
+                    console.error('❌ Error creating label:', error);
+                    return null;
+                }
+            }
+
+            /**
+             * Position label above object
+             * @param {THREE.Sprite} sprite - Label sprite
+             * @param {THREE.Object3D} object - Object to position above
+             */
+            positionLabel(sprite, object) {
+                // Get object height (furniture objects are typically 3.5 units tall)
+                const objectHeight = object.geometry?.parameters?.height || 3.5;
+                
+                // Update world matrix
+                if (object.parent) {
+                    object.updateMatrixWorld(true);
+                }
+                
+                // Get world position
+                const worldPos = new this.THREE.Vector3();
+                object.getWorldPosition(worldPos);
+                
+                // Position above object (height/2 + 0.6 offset)
+                worldPos.y += (objectHeight / 2 + 0.6);
+                sprite.position.copy(worldPos);
+            }
+
+            /**
+             * Update all label positions (call in animation loop if objects move)
+             */
+            updateLabelPositions() {
+                this.labels.forEach((sprite, objectUUID) => {
+                    const object = this.scene.getObjectByProperty('uuid', objectUUID);
+                    if (object) {
+                        this.positionLabel(sprite, object);
+                    }
+                });
+            }
+
+            /**
+             * Remove all labels
+             */
+            removeAllLabels() {
+                this.labels.forEach(sprite => {
+                    if (sprite.material.map) {
+                        sprite.material.map.dispose();
+                    }
+                    sprite.material.dispose();
+                    sprite.geometry.dispose();
+                    this.scene.remove(sprite);
+                });
+                this.labels.clear();
+                console.log('📝 Removed all labels');
+            }
+        }
+
         // Viewer Application
         class FurnitureViewer {
             constructor() {
@@ -1174,6 +1311,7 @@
                 this.lastDragX = 0;
                 this.lastDragTime = 0;
                 this.touchDistance = 0; // For pinch-to-zoom
+                this.labelManager = null; // For title labels
                 
                 this.init();
             }
@@ -1537,6 +1675,9 @@
                 this.scene = new THREE.Scene();
                 // Default background (will be overridden by world theme)
                 this.scene.background = new THREE.Color(0x1a1a2e);
+                
+                // Initialize label manager
+                this.labelManager = new LinkTitleManager(this.scene, THREE);
                 
                 // Camera
                 this.camera = new THREE.PerspectiveCamera(
@@ -3343,6 +3484,11 @@
                 
                 this.furniture.add(mesh); // Make object child of furniture so it rotates with it
                 this.objects.push(mesh);
+                
+                // Create title label if displayTitle exists
+                if (objData.displayTitle && this.labelManager) {
+                    this.labelManager.createLabel(mesh, objData.displayTitle);
+                }
             }
 
             createLocalMediaPlaceholder(objData, furnitureData) {
@@ -3375,6 +3521,11 @@
                 
                 this.furniture.add(mesh); // Make object child of furniture so it rotates with it
                 this.objects.push(mesh);
+                
+                // Create title label if displayTitle exists
+                if (objData.displayTitle && this.labelManager) {
+                    this.labelManager.createLabel(mesh, objData.displayTitle);
+                }
             }
 
             calculateSlotPosition(slotIndex, furnitureData) {
@@ -3712,6 +3863,11 @@
                         this.furniture.rotation.y += this.rotationVelocity;
                         this.rotationVelocity *= 0.95; // Decay
                     }
+                }
+                
+                // Update label positions
+                if (this.labelManager) {
+                    this.labelManager.updateLabelPositions();
                 }
                 
                 // Object hover glow effect
