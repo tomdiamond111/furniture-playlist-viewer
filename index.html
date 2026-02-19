@@ -1273,7 +1273,10 @@
                 let pasteService = null;
                 
                 // Check for paste ID in query params
-                if (urlParams.has('paste')) {
+                if (urlParams.has('ixio')) {
+                    pasteId = urlParams.get('ixio');
+                    pasteService = 'ixio';
+                } else if (urlParams.has('paste')) {
                     pasteId = urlParams.get('paste');
                     pasteService = 'paste';
                 } else if (urlParams.has('rentry')) {
@@ -1302,7 +1305,10 @@
                 else if (window.location.hash) {
                     const hash = window.location.hash.substring(1); // Remove #
                     const hashParams = new URLSearchParams(hash);
-                    if (hashParams.has('paste')) {
+                    if (hashParams.has('ixio')) {
+                        pasteId = hashParams.get('ixio');
+                        pasteService = 'ixio';
+                    } else if (hashParams.has('paste')) {
                         pasteId = hashParams.get('paste');
                         pasteService = 'paste';
                     } else if (hashParams.has('rentry')) {
@@ -1334,7 +1340,12 @@
                     
                     // Fetch from appropriate service
                     let response;
-                    if (pasteService === 'paste') {
+                    if (pasteService === 'ixio') {
+                        console.log('📥 Loading from ix.io:', this.pasteId);
+                        // ix.io direct fetch
+                        response = await fetch(`http://ix.io/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from ix.io');
+                    } else if (pasteService === 'paste') {
                         console.log('📥 Loading from dpaste.com:', this.pasteId);
                         // dpaste.com with .txt extension - direct fetch
                         response = await fetch(`https://dpaste.com/${this.pasteId}.txt`);
