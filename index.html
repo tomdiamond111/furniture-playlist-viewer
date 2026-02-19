@@ -1330,8 +1330,8 @@
                     let response;
                     if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
-                        // rentry.co supports CORS - direct fetch with Accept header to get plain text
-                        response = await fetch(`https://rentry.co/${this.pasteId}`, {
+                        // rentry.co requires /raw endpoint to get plain text
+                        response = await fetch(`https://rentry.co/${this.pasteId}/raw`, {
                             headers: {
                                 'Accept': 'text/plain, */*'
                             }
