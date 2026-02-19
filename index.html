@@ -1276,15 +1276,18 @@
                 if (urlParams.has('rentry')) {
                     pasteId = urlParams.get('rentry');
                     pasteService = 'rentry';
+                } else if (urlParams.has('pastesio')) {
+                    pasteId = urlParams.get('pastesio');
+                    pasteService = 'pastesio';
+                } else if (urlParams.has('pastegg')) {
+                    pasteId = urlParams.get('pastegg');
+                    pasteService = 'pastegg';
                 } else if (urlParams.has('pasters')) {
                     pasteId = urlParams.get('pasters');
                     pasteService = 'pasters';
                 } else if (urlParams.has('termbin')) {
                     pasteId = urlParams.get('termbin');
                     pasteService = 'termbin';
-                } else if (urlParams.has('pastegg')) {
-                    pasteId = urlParams.get('pastegg');
-                    pasteService = 'pastegg';
                 } else if (urlParams.has('dpaste')) {
                     pasteId = urlParams.get('dpaste');
                     pasteService = 'dpaste';
@@ -1299,15 +1302,18 @@
                     if (hashParams.has('rentry')) {
                         pasteId = hashParams.get('rentry');
                         pasteService = 'rentry';
+                    } else if (hashParams.has('pastesio')) {
+                        pasteId = hashParams.get('pastesio');
+                        pasteService = 'pastesio';
+                    } else if (hashParams.has('pastegg')) {
+                        pasteId = hashParams.get('pastegg');
+                        pasteService = 'pastegg';
                     } else if (hashParams.has('pasters')) {
                         pasteId = hashParams.get('pasters');
                         pasteService = 'pasters';
                     } else if (hashParams.has('termbin')) {
                         pasteId = hashParams.get('termbin');
                         pasteService = 'termbin';
-                    } else if (hashParams.has('pastegg')) {
-                        pasteId = hashParams.get('pastegg');
-                        pasteService = 'pastegg';
                     } else if (hashParams.has('dpaste')) {
                         pasteId = hashParams.get('dpaste');
                         pasteService = 'dpaste';
@@ -1324,17 +1330,19 @@
                     let response;
                     if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
-                        response = await this.fetchWithProxy(`https://rentry.co/${this.pasteId}/raw`, 'rentry.co');
-                    } else if (pasteService === 'pasters') {
-                        console.log('📥 Loading from paste.rs:', this.pasteId);
-                        response = await this.fetchWithProxy(`https://paste.rs/${this.pasteId}`, 'paste.rs');
-                    } else if (pasteService === 'termbin') {
-                        console.log('📥 Loading from termbin.com:', this.pasteId);
-                        response = await this.fetchWithProxy(`https://termbin.com/${this.pasteId}`, 'termbin.com');
+                        // rentry.co supports CORS - direct fetch
+                        response = await fetch(`https://rentry.co/${this.pasteId}/raw`);
+                        if (!response.ok) throw new Error('Failed to fetch from rentry.co');
+                    } else if (pasteService === 'pastesio') {
+                        console.log('📥 Loading from pastes.io:', this.pasteId);
+                        // pastes.io supports CORS - direct fetch
+                        response = await fetch(`https://pastes.io/raw/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from pastes.io');
                     } else if (pasteService === 'pastegg') {
                         console.log('📥 Loading from paste.gg:', this.pasteId);
                         // paste.gg has a proper API endpoint that returns JSON
-                        response = await this.fetchWithProxy(`https://api.paste.gg/v1/pastes/${this.pasteId}`, 'paste.gg');
+                        response = await fetch(`https://api.paste.gg/v1/pastes/${this.pasteId}`);
+                        if (!response.ok) throw new Error('Failed to fetch from paste.gg');
                         
                         // Parse paste.gg JSON response
                         const pasteData = await response.json();
@@ -1367,6 +1375,12 @@
                         } else {
                             throw new Error('Invalid paste.gg response structure');
                         }
+                    } else if (pasteService === 'pasters') {
+                        console.log('📥 Loading from paste.rs:', this.pasteId);
+                        response = await this.fetchWithProxy(`https://paste.rs/${this.pasteId}`, 'paste.rs');
+                    } else if (pasteService === 'termbin') {
+                        console.log('📥 Loading from termbin.com:', this.pasteId);
+                        response = await this.fetchWithProxy(`https://termbin.com/${this.pasteId}`, 'termbin.com');
                     } else if (pasteService === 'dpaste') {
                         console.log('📥 Loading from dpaste.com:', this.pasteId);
                         response = await this.fetchWithProxy(`https://dpaste.com/${this.pasteId}.txt`, 'dpaste.com');
