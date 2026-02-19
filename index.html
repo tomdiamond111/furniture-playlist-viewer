@@ -1331,7 +1331,7 @@
                     if (pasteService === 'rentry') {
                         console.log('📥 Loading from rentry.co:', this.pasteId);
                         // rentry.co supports CORS - direct fetch
-                        response = await fetch(`https://rentry.co/${this.pasteId}/raw`);
+                        response = await fetch(`https://rentry.co/${this.pasteId}`);
                         if (!response.ok) throw new Error('Failed to fetch from rentry.co');
                     } else if (pasteService === 'pastesio') {
                         console.log('📥 Loading from pastes.io:', this.pasteId);
