@@ -2949,8 +2949,9 @@
                 const endDistance = this.cameraDistance;
                 const startHeight = 20;
                 const endHeight = this.cameraTarget.y + 8;
-                const startRotation = 0;
-                const endRotation = Math.PI * 2; // Full 360° rotation
+                const initialRotation = this.furniture.userData.frontFacingRotation || 0;
+                const startRotation = initialRotation;
+                const endRotation = initialRotation + Math.PI * 2; // Full 360° rotation
                 
                 // Allow skipping intro with tap/click
                 let skipped = false;
@@ -3590,7 +3591,7 @@
             calculateGalleryWallSlot(slotIndex) {
                 // 2 rows x 5 columns (10 objects) - increased spacing for larger objects
                 const cols = 5;
-                const spacing = 3.5; // Increased from 2.5 to accommodate 2.8 wide objects
+                const spacing = 3.85; // Increased by 10% to provide clearance and prevent label overlap
                 
                 const col = slotIndex % cols;
                 const row = Math.floor(slotIndex / cols);
