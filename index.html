@@ -110,6 +110,27 @@
             display: block;
         }
 
+        /* Google Play Badge */
+        .google-play-badge {
+            position: fixed;
+            z-index: 60;
+            bottom: 20px;
+            right: 360px;
+            transition: all 0.3s ease;
+        }
+
+        .google-play-badge img {
+            height: 50px;
+            width: auto;
+            display: block;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        .google-play-badge img:hover {
+            opacity: 1;
+        }
+
         /* Standalone Info Button for landscape mode */
         #info-button-landscape {
             position: fixed;
@@ -826,6 +847,18 @@
                 height: 35px !important;
             }
 
+            /* Google Play Badge - position in top left, away from logo */
+            .google-play-badge {
+                top: 10px !important;
+                left: 10px !important;
+                right: auto !important;
+                bottom: auto !important;
+            }
+
+            .google-play-badge img {
+                height: 40px !important;
+            }
+
             #playlist {
                 position: fixed !important;
                 left: 8px !important;
@@ -906,6 +939,18 @@
 
             .logo-container img {
                 height: 30px !important;
+            }
+
+            /* Google Play Badge - position bottom left, before controls */
+            .google-play-badge {
+                bottom: 5px !important;
+                left: 5px !important;
+                right: auto !important;
+                top: auto !important;
+            }
+
+            .google-play-badge img {
+                height: 35px !important;
             }
 
             #playlist {
@@ -1053,6 +1098,11 @@
         <div class="logo-container">
             <img src="FirstTapsMV3D_logo1.jpg" alt="FirstTaps MV3D">
         </div>
+
+        <!-- Google Play Badge -->
+        <a href="https://play.google.com/store/apps/details?id=com.firsttaps.mv3d" target="_blank" rel="noopener" class="google-play-badge">
+            <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+        </a>
 
         <!-- Old info button removed - using simplified mobile panel instead -->
         <!-- <button id="info-button-landscape" onclick="window.furnitureViewer.toggleInfoPanel()" style="display: none;">ℹ️ Info</button> -->
