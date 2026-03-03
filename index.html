@@ -3465,38 +3465,37 @@
                 let thumbnailTexture = null;
                 let thumbnailSource = null;
                 
-                // Prefer thumbnailUrl (YouTube/Vimeo) with CORS proxy, fallback to thumbnailDataUrl
-                if (objData.thumbnailUrl) {
-                    // Proxy external URLs to avoid CORS issues
-                    if (objData.thumbnailUrl.includes('ytimg.com') || objData.thumbnailUrl.includes('vimeocdn.com')) {
-                        thumbnailSource = `https://api.allorigins.win/raw?url=${encodeURIComponent(objData.thumbnailUrl)}`;
-                    } else {
-                        thumbnailSource = objData.thumbnailUrl;
-                    }
-                } else if (objData.thumbnailDataUrl) {
+                // Prefer thumbnailDataUrl (base64), fallback to direct URL without proxy
+                // Note: External URLs may fail due to CORS, but won't block loading
+                if (objData.thumbnailDataUrl) {
                     thumbnailSource = objData.thumbnailDataUrl;
+                } else if (objData.thumbnailUrl) {
+                    // Try direct URL (may fail due to CORS, but with timeout won't hang)
+                    thumbnailSource = objData.thumbnailUrl;
                 }
                 
                 if (thumbnailSource) {
                     try {
-                        thumbnailTexture = await this.loadTexture(thumbnailSource);
+                        // Use shorter timeout for external URLs to prevent hanging (2s max)
+                        const timeout = objData.thumbnailDataUrl ? 5000 : 2000;
+                        thumbnailTexture = await this.loadTexture(thumbnailSource, timeout);
+                        console.log(`✅ Loaded thumbnail for: ${objData.name || objData.title || 'object'}`);
                     } catch (error) {
-                        console.warn('Failed to load thumbnail:', error);
-                        // Try fallback to thumbnailDataUrl if thumbnailUrl failed
-                        if (objData.thumbnailUrl && objData.thumbnailDataUrl) {
-                            try {
-                                thumbnailTexture = await this.loadTexture(objData.thumbnailDataUrl);
-                            } catch (e) {
-                                console.warn('Fallback thumbnail also failed:', e);
-                            }
-                        }
+                        // Thumbnail failed - create placeholder instead (non-blocking)
+                        const reason = error.message.includes('timeout') ? 'timeout' : 'CORS/load error';
+                        console.log(`ℹ️ Thumbnail ${reason} (expected for ${objData.domain}), using placeholder for: ${objData.name || objData.title || 'object'}`);
+                        thumbnailTexture = this.createPlaceholderTexture(objData.name || objData.title, objData.domain);
                     }
+                } else {
+                    // No thumbnail source at all - use placeholder
+                    thumbnailTexture = this.createPlaceholderTexture(objData.name || objData.title, objData.domain);
                 }
                 
                 // Create materials (6 faces)
+                // thumbnailTexture is now always set (either real thumbnail or placeholder)
                 for (let i = 0; i < 6; i++) {
-                    if (i === 4 && thumbnailTexture) {
-                        // Front face with thumbnail - enhanced with border glow
+                    if (i === 4) {
+                        // Front face with thumbnail or placeholder
                         materials.push(new THREE.MeshStandardMaterial({
                             map: thumbnailTexture,
                             metalness: 0.2,
@@ -3709,12 +3708,65 @@
                 return colors[domain] || colors.default;
             }
 
-            loadTexture(dataUrl) {
+            createPlaceholderTexture(serviceName, domain) {
+                // Create a canvas-based placeholder texture when external thumbnails fail
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                // Background with domain-specific color
+                const bgColor = this.getDomainColor(domain);
+                ctx.fillStyle = `#${bgColor.toString(16).padStart(6, '0')}`;
+                ctx.fillRect(0, 0, 512, 512);
+                
+                // Semi-transparent overlay
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, 512, 512);
+                
+                // Service icon/emoji
+                ctx.font = 'bold 120px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Service-specific emoji
+                const emoji = domain === 'vimeo.com' ? '▶️' :
+                             domain === 'youtube.com' ? '▶️' :
+                             domain === 'dailymotion.com' ? '▶️' : '🎬';
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillText(emoji, 256, 200);
+                
+                // Service name
+                ctx.font = 'bold 32px Arial';
+                const displayName = serviceName || domain || 'Video';
+                const truncated = displayName.length > 20 ? displayName.substring(0, 20) + '...' : displayName;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillText(truncated, 256, 350);
+                
+                // Create and return Three.js texture
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                
+                return texture;
+            }
+
+            loadTexture(dataUrl, timeout = 3000) {
                 return new Promise((resolve, reject) => {
                     const loader = new THREE.TextureLoader();
+                    
+                    // Add timeout to prevent hanging
+                    const timeoutId = setTimeout(() => {
+                        reject(new Error('Texture load timeout'));
+                    }, timeout);
+                    
                     loader.load(
                         dataUrl,
                         (texture) => {
+                            clearTimeout(timeoutId);
                             texture.wrapS = THREE.ClampToEdgeWrapping;
                             texture.wrapT = THREE.ClampToEdgeWrapping;
                             texture.minFilter = THREE.LinearFilter;
@@ -3722,7 +3774,10 @@
                             resolve(texture);
                         },
                         undefined,
-                        (error) => reject(error)
+                        (error) => {
+                            clearTimeout(timeoutId);
+                            reject(error);
+                        }
                     );
                 });
             }
@@ -3808,21 +3863,16 @@
                         const thumb = document.createElement('img');
                         thumb.className = 'playlist-item-thumbnail';
                         
-                        // Prefer thumbnailUrl (YouTube/Vimeo) with CORS proxy
-                        if (objData.thumbnailUrl) {
-                            if (objData.thumbnailUrl.includes('ytimg.com') || objData.thumbnailUrl.includes('vimeocdn.com')) {
-                                thumb.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(objData.thumbnailUrl)}`;
-                            } else {
-                                thumb.src = objData.thumbnailUrl;
-                            }
-                            // Fallback to thumbnailDataUrl if URL fails
-                            thumb.onerror = () => {
-                                if (objData.thumbnailDataUrl) {
-                                    thumb.src = objData.thumbnailDataUrl;
-                                }
-                            };
-                        } else {
+                        // Prefer thumbnailDataUrl (base64) since external URLs may fail due to CORS
+                        if (objData.thumbnailDataUrl) {
                             thumb.src = objData.thumbnailDataUrl;
+                        } else if (objData.thumbnailUrl) {
+                            // Try direct URL (may fail silently due to CORS)
+                            thumb.src = objData.thumbnailUrl;
+                            thumb.onerror = () => {
+                                // Hide thumbnail on error to avoid broken image icon
+                                thumb.style.display = 'none';
+                            };
                         }
                         
                         item.appendChild(thumb);
@@ -4058,21 +4108,16 @@
                         const thumb = document.createElement('img');
                         thumb.className = 'track-item-thumbnail';
                         
-                        // Prefer thumbnailUrl (YouTube/Vimeo) with CORS proxy
-                        if (objData.thumbnailUrl) {
-                            if (objData.thumbnailUrl.includes('ytimg.com') || objData.thumbnailUrl.includes('vimeocdn.com')) {
-                                thumb.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(objData.thumbnailUrl)}`;
-                            } else {
-                                thumb.src = objData.thumbnailUrl;
-                            }
-                            // Fallback to thumbnailDataUrl if URL fails
-                            thumb.onerror = () => {
-                                if (objData.thumbnailDataUrl) {
-                                    thumb.src = objData.thumbnailDataUrl;
-                                }
-                            };
-                        } else {
+                        // Prefer thumbnailDataUrl (base64) since external URLs may fail due to CORS
+                        if (objData.thumbnailDataUrl) {
                             thumb.src = objData.thumbnailDataUrl;
+                        } else if (objData.thumbnailUrl) {
+                            // Try direct URL (may fail silently due to CORS)
+                            thumb.src = objData.thumbnailUrl;
+                            thumb.onerror = () => {
+                                // Hide thumbnail on error to avoid broken image icon
+                                thumb.style.display = 'none';
+                            };
                         }
                         
                         item.appendChild(thumb);
