@@ -1461,7 +1461,10 @@
                 let pasteService = null;
                 
                 // Check for paste ID in query params
-                if (urlParams.has('gist')) {
+                if (urlParams.has('cf')) {
+                    pasteId = urlParams.get('cf');
+                    pasteService = 'cloudflare';
+                } else if (urlParams.has('gist')) {
                     pasteId = urlParams.get('gist');
                     pasteService = 'gist';
                 } else if (urlParams.has('hastebin')) {
@@ -1499,7 +1502,10 @@
                 else if (window.location.hash) {
                     const hash = window.location.hash.substring(1); // Remove #
                     const hashParams = new URLSearchParams(hash);
-                    if (hashParams.has('gist')) {
+                    if (hashParams.has('cf')) {
+                        pasteId = hashParams.get('cf');
+                        pasteService = 'cloudflare';
+                    } else if (hashParams.has('gist')) {
                         pasteId = hashParams.get('gist');
                         pasteService = 'gist';
                     } else if (hashParams.has('hastebin')) {
@@ -1540,7 +1546,41 @@
                     
                     // Fetch from appropriate service
                     let response;
-                    if (pasteService === 'gist') {
+                    if (pasteService === 'cloudflare') {
+                        console.log('📥 Loading from Cloudflare Workers KV:', this.pasteId);
+                        
+                        const workerUrl = 'https://firsttaps-paste.firsttaps.workers.dev';
+                        
+                        // Cloudflare Worker API - direct fetch, CORS enabled
+                        response = await fetch(`${workerUrl}/api/paste/${this.pasteId}`);
+                        if (!response.ok) {
+                            if (response.status === 404) {
+                                throw new Error('Paste not found or expired. Please generate a new share link.');
+                            }
+                            throw new Error(`Failed to fetch from Cloudflare Workers (HTTP ${response.status})`);
+                        }
+                        
+                        let rawData = await response.text();
+                        console.log('📦 Raw data from Cloudflare (first 100 chars):', rawData.substring(0, 100));
+                        
+                        // Clean whitespace
+                        const originalLength = rawData.length;
+                        furnitureData = rawData.replace(/\s+/g, '');
+                        if (furnitureData.length !== originalLength) {
+                            console.log(`🧹 Cleaned data: ${originalLength} → ${furnitureData.length} chars`);
+                        }
+                        
+                        // Decompress with LZ-String
+                        console.log('🗜️ Decompressing with LZ-String...');
+                        const jsonString = LZString.decompressFromEncodedURIComponent(furnitureData);
+                        if (!jsonString) {
+                            throw new Error('Failed to decompress data. The share link may be corrupted.');
+                        }
+                        console.log('✅ Data decompressed successfully');
+                        const data = JSON.parse(jsonString);
+                        console.log('✅ Furniture data loaded:', data);
+                        return data;
+                    } else if (pasteService === 'gist') {
                         console.log('📥 Loading from GitHub Gist:', this.pasteId);
                         // GitHub Gist API - direct fetch, no CORS issues
                         response = await fetch(`https://api.github.com/gists/${this.pasteId}`);
